@@ -256,6 +256,7 @@ const QUESTIONS = [
   {
     id: 'incomodo',
     q: 'O que mais te incomoda no seu rosto atualmente?',
+    multi: true,
     opts: [
       { e:'😤', l:'Papada', v:'papada' },
       { e:'🔻', l:'Queixo pequeno', v:'queixo pequeno' },
@@ -270,6 +271,7 @@ const QUESTIONS = [
   {
     id: 'objetivo',
     q: 'Qual resultado você busca?',
+    multi: true,
     opts: [
       { e:'⏪', l:'Parecer mais jovem', v:'parecer mais jovem' },
       { e:'🔲', l:'Rosto mais definido', v:'rosto mais definido' },
@@ -379,8 +381,8 @@ function addBubble(who, txt) {
 }
 
 const QUIZ_TAGS = [
-  'Etapa 1 de 8 — Principal incômodo',
-  'Etapa 2 de 8 — Objetivo estético',
+  'Etapa 1 de 8 — Principal incômodo (múltipla escolha)',
+  'Etapa 2 de 8 — Objetivo estético (múltipla escolha)',
   'Etapa 3 de 8 — Intensidade desejada',
   'Etapa 4 de 8 — Regiões (múltipla escolha)',
   'Etapa 5 de 8 — Referência estética',
