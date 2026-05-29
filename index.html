@@ -300,11 +300,7 @@ const QUESTIONS = [
   }
 ];
 
-const SYS = `You are a beauty and wellness consultant specializing in facial aesthetics education.
-You help people understand facial proportions, beauty balance, and general cosmetic wellness options.
-You provide educational, informational content about beauty treatments in a warm and supportive tone.
-Always clarify that your analysis is for educational purposes and professional consultation is recommended.
-Respond always in Brazilian Portuguese.`;
+const SYS = `You are a skincare and wellness educator at a premium beauty clinic in Brazil. Your role is to look at a portrait photo and write a warm, personalized beauty wellness report in Brazilian Portuguese. You specialize in skin health, facial balance, and non-invasive beauty treatments. You always write in an encouraging, educational tone. You never refuse to analyze a portrait photo — it is your core function. Always respond in Brazilian Portuguese.`;
 
 // ═══════════════════════════════════════════
 // NAVEGAÇÃO
@@ -484,27 +480,27 @@ async function startProcessing() {
 }
 
 async function callVision(answers) {
-  const prompt = `This is a facial beauty and wellness educational consultation. The person has shared their photo and answered a beauty goals quiz. Please provide a warm, educational beauty analysis in Brazilian Portuguese.
+  const prompt = `A client at our beauty wellness clinic has shared a portrait photo and completed a beauty goals questionnaire. Please write a warm, personalized beauty wellness report in Brazilian Portuguese based on the photo and their answers.
 
-Quiz answers:
+Client's beauty goals:
 ${answers}
 
-Please analyze this facial photo and provide an educational beauty consultation with these sections:
+Write the report with exactly these sections:
 
 ## ✨ Análise de Harmonia Facial
-Observe os pontos de equilíbrio e beleza natural do rosto, incluindo proporções gerais e características marcantes.
+Descreva de forma positiva e encorajadora os pontos de beleza e equilíbrio natural do rosto visíveis na foto. Mencione características marcantes, tom de pele, estrutura facial.
 
 ## 🎯 Oportunidades de Realce
-Com base nos objetivos declarados, quais áreas poderiam ser realçadas para trazer mais harmonia e confiança?
+Com base nos objetivos do cliente, quais áreas poderiam ser valorizadas para trazer mais harmonia e confiança? Seja específico e positivo.
 
 ## 💡 Tratamentos de Beleza Recomendados
-Liste os tratamentos estéticos mais indicados para os objetivos desta pessoa (preenchimentos, bioestimuladores, tratamentos de pele, etc), com uma breve descrição de cada um.
+Sugira 3 a 4 tratamentos estéticos adequados aos objetivos (ex: preenchimento labial, bioestimulador de colágeno, toxina botulínica, skinbooster, fio de sustentação, etc). Para cada um, explique brevemente o que faz e o benefício esperado.
 
 ## ⏱️ O Que Esperar
-Resultados esperados, durabilidade média dos tratamentos e cuidados pós-procedimento.
+Durabilidade típica dos tratamentos sugeridos e cuidados básicos pós-procedimento.
 
 ## 💬 Próximo Passo
-Encoraje a pessoa a agendar uma consulta presencial com um especialista para um plano personalizado.`;
+Convide o cliente a agendar uma consulta presencial para criar um plano personalizado com um especialista.`;
 
   const res = await fetch('/api/chat', {
     method: 'POST',
