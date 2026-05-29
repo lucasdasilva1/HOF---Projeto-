@@ -144,7 +144,7 @@ h2 { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; 
 
     <!-- STEP 1: QUIZ -->
     <div class="step" id="s1">
-      <div class="tag">Etapa 1 de 3 — Seus objetivos</div>
+      <div class="tag" id="quizTag">Etapa 1 de 8 — Principal incômodo</div>
       <h2>Vamos entender o que você quer</h2>
       <div class="chat" id="chat"></div>
       <div id="optsArea"></div>
@@ -163,7 +163,7 @@ h2 { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; 
     <div class="step" id="s2">
       <div class="tag">Etapa 2 de 3 — Sua foto</div>
       <h2>Agora envie sua foto</h2>
-      <div class="desc">Use uma foto frontal, com boa iluminação, expressão neutra e cabelo afastado da testa.</div>
+      <div class="desc">Para o melhor resultado: sem óculos · sem filtro · boa iluminação · olhando para frente · apenas uma pessoa na foto.</div>
       <div class="upload-zone" id="uploadZone">
         <input type="file" id="fileInp" accept="image/jpeg,image/png,image/webp" onchange="onFile(this)">
         <div id="upPH">
@@ -254,49 +254,92 @@ let selOpt = null;
 // ═══════════════════════════════════════════
 const QUESTIONS = [
   {
+    id: 'incomodo',
+    q: 'O que mais te incomoda no seu rosto atualmente?',
+    opts: [
+      { e:'😤', l:'Papada', v:'papada' },
+      { e:'🔻', l:'Queixo pequeno', v:'queixo pequeno' },
+      { e:'〔', l:'Mandíbula pouco definida', v:'mandíbula pouco definida' },
+      { e:'👁', l:'Olheiras', v:'olheiras' },
+      { e:'💋', l:'Lábios finos', v:'lábios finos' },
+      { e:'〰️', l:'Rugas e linhas', v:'rugas e linhas de expressão' },
+      { e:'😞', l:'Flacidez', v:'flacidez facial' },
+      { e:'💆', l:'Bochechas caídas', v:'bochechas caídas' }
+    ]
+  },
+  {
     id: 'objetivo',
-    q: 'Qual é o seu objetivo principal com a harmonização?',
+    q: 'Qual resultado você busca?',
     opts: [
-      { e:'⏪', l:'Rejuvenescimento', v:'rejuvenescimento' },
-      { e:'🔲', l:'Contorno e definição', v:'contorno e definição' },
-      { e:'💧', l:'Preenchimento de volumes', v:'preenchimento de volumes' },
-      { e:'⟺', l:'Correção de assimetrias', v:'correção de assimetrias' }
+      { e:'⏪', l:'Parecer mais jovem', v:'parecer mais jovem' },
+      { e:'🔲', l:'Rosto mais definido', v:'rosto mais definido' },
+      { e:'✨', l:'Ficar mais atraente', v:'ficar mais atraente' },
+      { e:'⟺', l:'Corrigir assimetrias', v:'corrigir assimetrias' },
+      { e:'🌿', l:'Realçar traços naturais', v:'realçar traços naturais' },
+      { e:'💪', l:'Melhorar autoestima', v:'aumentar autoestima' }
     ]
   },
   {
-    id: 'regiao',
-    q: 'Qual região você quer trabalhar?',
+    id: 'intensidade',
+    q: 'Qual estilo de resultado você prefere?',
     opts: [
+      { e:'🌿', l:'Muito natural', v:'muito natural — ninguém percebe' },
+      { e:'👌', l:'Natural perceptível', v:'natural — percebem que estou melhor' },
+      { e:'⚖️', l:'Moderado', v:'moderado' },
+      { e:'✨', l:'Marcante', v:'marcante' },
+      { e:'💥', l:'Transformação máxima', v:'transformação máxima' }
+    ]
+  },
+  {
+    id: 'regioes',
+    q: 'Quais regiões você quer melhorar? (pode escolher várias)',
+    multi: true,
+    opts: [
+      { e:'〔', l:'Mandíbula', v:'mandíbula' },
+      { e:'🔻', l:'Queixo', v:'queixo' },
       { e:'💋', l:'Lábios', v:'lábios' },
-      { e:'◈',  l:'Malar e maçãs', v:'malar e maçãs do rosto' },
-      { e:'〔', l:'Mandíbula e contorno', v:'mandíbula e contorno facial' },
-      { e:'🔻', l:'Mento e queixo', v:'mento e queixo' }
+      { e:'◈',  l:'Maçãs do rosto', v:'maçãs do rosto' },
+      { e:'👁', l:'Olheiras', v:'olheiras' },
+      { e:'🧠', l:'Testa', v:'testa' },
+      { e:'😤', l:'Papada', v:'papada' },
+      { e:'🦢', l:'Pescoço', v:'pescoço' }
     ]
   },
   {
-    id: 'estilo',
-    q: 'Que estilo de resultado você prefere?',
+    id: 'referencia',
+    q: 'Qual resultado combina mais com você?',
     opts: [
-      { e:'🌿', l:'Natural e discreto', v:'natural e discreto' },
-      { e:'⚖️', l:'Equilibrado', v:'equilibrado e perceptível' },
-      { e:'✨', l:'Marcante', v:'marcante e expressivo' }
+      { e:'🌿', l:'Natural', v:'estética natural' },
+      { e:'👑', l:'Elegante', v:'estética elegante e sofisticada' },
+      { e:'💪', l:'Mais masculino', v:'traços mais masculinos e angulosos' },
+      { e:'🌸', l:'Mais feminino', v:'traços mais femininos e delicados' }
     ]
   },
   {
-    id: 'preservar',
-    q: 'Alguma característica que você ama e quer preservar?',
+    id: 'idade',
+    q: 'Qual sua faixa etária?',
+    opts: [
+      { e:'🧑', l:'18 a 25 anos', v:'18 a 25 anos' },
+      { e:'🧑', l:'26 a 35 anos', v:'26 a 35 anos' },
+      { e:'🧑', l:'36 a 45 anos', v:'36 a 45 anos' },
+      { e:'🧓', l:'46 a 55 anos', v:'46 a 55 anos' },
+      { e:'🧓', l:'56 anos ou mais', v:'56 anos ou mais' }
+    ]
+  },
+  {
+    id: 'genero',
+    q: 'Como você se identifica?',
+    opts: [
+      { e:'♂️', l:'Homem', v:'homem' },
+      { e:'♀️', l:'Mulher', v:'mulher' },
+      { e:'⚧', l:'Não-binário', v:'não-binário' }
+    ]
+  },
+  {
+    id: 'mudanca',
+    q: 'Se pudesse mudar apenas uma coisa hoje, o que seria?',
     type: 'text',
-    ph: 'Ex: meus olhos, o formato do nariz, o sorriso...'
-  },
-  {
-    id: 'historico',
-    q: 'Já fez algum procedimento estético antes?',
-    opts: [
-      { e:'❌', l:'Nunca fiz', v:'nenhum procedimento anterior' },
-      { e:'💉', l:'Ácido hialurônico', v:'ácido hialurônico anteriormente' },
-      { e:'⚡', l:'Toxina botulínica', v:'toxina botulínica anteriormente' },
-      { e:'📋', l:'Outros', v:'outros procedimentos anteriores' }
-    ]
+    ph: 'Ex: quero afinar o rosto, definir meu queixo, tirar a papada...'
   }
 ];
 
@@ -322,7 +365,7 @@ function initQuiz() {
   quizA = {}; qIdx = 0; selOpt = null;
   document.getElementById('btnNxt').style.display = 'none';
   document.getElementById('btnPhoto').style.display = 'none';
-  addBubble('ai', 'Olá! Vou fazer 5 perguntas rápidas para personalizar sua análise. Depois você envia a foto e geramos a simulação. Vamos lá! 🌟');
+  addBubble('ai', 'Olá! Vou fazer 8 perguntas rápidas para personalizar sua simulação. Quanto mais você responder, mais preciso fica o resultado. Vamos lá! 🌟');
   setTimeout(() => showQ(0), 500);
 }
 
@@ -335,11 +378,25 @@ function addBubble(who, txt) {
   c.scrollTop = c.scrollHeight;
 }
 
+const QUIZ_TAGS = [
+  'Etapa 1 de 8 — Principal incômodo',
+  'Etapa 2 de 8 — Objetivo estético',
+  'Etapa 3 de 8 — Intensidade desejada',
+  'Etapa 4 de 8 — Regiões (múltipla escolha)',
+  'Etapa 5 de 8 — Referência estética',
+  'Etapa 6 de 8 — Faixa etária',
+  'Etapa 7 de 8 — Gênero',
+  'Etapa 8 de 8 — Mudança desejada'
+];
+
+let multiSel = [];
+
 function showQ(i) {
   const q = QUESTIONS[i];
   if (!q) return;
-  qIdx = i; selOpt = null;
-  addBubble('ai', `(${i+1}/5) ${q.q}`);
+  qIdx = i; selOpt = null; multiSel = [];
+  addBubble('ai', `(${i+1}/8) ${q.q}`);
+  document.getElementById('quizTag').textContent = QUIZ_TAGS[i] || '';
 
   const oa = document.getElementById('optsArea');
   const ta = document.getElementById('txtArea');
@@ -353,6 +410,33 @@ function showQ(i) {
     inp.placeholder = q.ph || '';
     inp.value = '';
     setTimeout(() => inp.focus(), 100);
+  } else if (q.multi) {
+    // múltipla seleção
+    ta.style.display = 'none';
+    const grid = document.createElement('div');
+    grid.className = 'opts';
+    q.opts.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = `<span class="opt-em">${o.e}</span><span>${o.l}</span>`;
+      b.onclick = () => {
+        if (b.classList.contains('sel')) {
+          b.classList.remove('sel');
+          multiSel = multiSel.filter(x => x !== o.v);
+        } else {
+          b.classList.add('sel');
+          multiSel.push(o.v);
+        }
+        if (multiSel.length > 0) {
+          document.getElementById('btnNxt').style.display = 'inline-flex';
+        } else {
+          document.getElementById('btnNxt').style.display = 'none';
+        }
+      };
+      grid.appendChild(b);
+    });
+    oa.innerHTML = '';
+    oa.appendChild(grid);
   } else {
     ta.style.display = 'none';
     const grid = document.createElement('div');
@@ -381,13 +465,28 @@ function showQ(i) {
 }
 
 function advanceQuiz() {
-  if (!selOpt) return;
-  quizA[QUESTIONS[qIdx].id] = selOpt.v;
-  addBubble('user', selOpt.l);
+  const q = QUESTIONS[qIdx];
+  if (q.multi) {
+    if (multiSel.length === 0) return;
+    quizA[q.id] = multiSel.join(', ');
+    addBubble('user', multiSel.join(' · '));
+  } else {
+    if (!selOpt) return;
+    quizA[q.id] = selOpt.v;
+    addBubble('user', selOpt.l);
+    selOpt = null;
+  }
   document.getElementById('optsArea').innerHTML = '';
   document.getElementById('btnNxt').style.display = 'none';
-  selOpt = null;
-  setTimeout(() => showQ(qIdx + 1), 350);
+  multiSel = [];
+
+  const next = qIdx + 1;
+  if (next < QUESTIONS.length) {
+    setTimeout(() => showQ(next), 350);
+  } else {
+    addBubble('ai', 'Perfeito! Agora envie sua foto frontal para gerar a simulação. 📸');
+    document.getElementById('btnPhoto').style.display = 'inline-flex';
+  }
 }
 
 function sendTxt() {
@@ -398,10 +497,11 @@ function sendTxt() {
   addBubble('user', v);
   inp.value = '';
   document.getElementById('txtArea').style.display = 'none';
-  if (qIdx < QUESTIONS.length - 1) {
-    setTimeout(() => showQ(qIdx + 1), 350);
+  const nextIdx = qIdx + 1;
+  if (nextIdx < QUESTIONS.length) {
+    setTimeout(() => showQ(nextIdx), 350);
   } else {
-    addBubble('ai', 'Ótimo! Agora envie sua foto frontal para gerar a simulação. 📸');
+    addBubble('ai', 'Perfeito! Agora envie sua foto frontal para gerar a simulação. 📸');
     document.getElementById('btnPhoto').style.display = 'inline-flex';
   }
 }
