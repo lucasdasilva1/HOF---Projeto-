@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonização Facial</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --p900: #26215C; --p800: #3C3489; --p600: #534AB7;
+  --p400: #7F77DD; --p200: #AFA9EC; --p100: #CECBF6; --p50: #EEEDFE;
+  --t50: #E1F5EE; --t400: #1D9E75; --t600: #0F6E56;
+  --a50: #FAEEDA; --a600: #854F0B;
+  --r50: #FCEBEB; --r600: #A32D2D;
+  --text: #1a1a1a; --text2: #666; --text3: #999;
+  --bg: #fff; --bg2: #f7f7f5; --bg3: #f0efe8;
+  --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.15);
+  --rad: 10px; --radlg: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e8e8e8; --text2: #aaa; --text3: #666;
+    --bg: #161616; --bg2: #202020; --bg3: #2a2a2a;
+    --border: rgba(255,255,255,0.09); --border2: rgba(255,255,255,0.16);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg3); color: var(--text);
+  min-height: 100vh; display: flex; justify-content: center;
+  padding: 24px 16px 48px;
+}
+.app { width: 100%; max-width: 620px; }
+
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radlg); overflow: hidden; }
+
+/* Top bar */
+.topbar { background: var(--p900); padding: 15px 20px; display: flex; align-items: center; gap: 12px; }
+.logo { width: 36px; height: 36px; border-radius: 50%; background: var(--p400); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.topbar-text { flex: 1; }
+.topbar-title { color: var(--p50); font-size: 15px; font-weight: 600; }
+
+/* Progress */
+.prog-track { height: 3px; background: var(--border); }
+.prog-fill { height: 100%; background: var(--p400); transition: width 0.5s ease; }
+
+/* Steps */
+.screen { padding: 28px 24px; }
+.step { display: none; animation: fadeIn 0.25s ease; }
+.step.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.tag { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p400); margin-bottom: 5px; }
+h2 { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.desc { font-size: 14px; color: var(--text2); line-height: 1.65; margin-bottom: 22px; }
+
+.err { background: var(--r50); border-radius: var(--rad); padding: 10px 13px; font-size: 13px; color: var(--r600); margin-bottom: 12px; display: none; }
+
+/* Quiz */
+.chat { background: var(--bg2); border-radius: var(--radlg); padding: 16px; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; scroll-behavior: smooth; }
+.bubble { max-width: 86%; font-size: 14px; line-height: 1.55; padding: 10px 14px; border-radius: 16px; }
+.bubble.ai { background: var(--p50); color: var(--p900); border-radius: 16px 16px 16px 3px; align-self: flex-start; border: 0.5px solid var(--p100); }
+.bubble.user { background: var(--p900); color: var(--p50); border-radius: 16px 16px 3px 16px; align-self: flex-end; }
+@media (prefers-color-scheme: dark) {
+  .bubble.ai { color: var(--p100); }
+  .bubble.user { color: #e0deff; }
+}
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.opt { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--rad); padding: 11px 13px; cursor: pointer; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; transition: all 0.15s; text-align: left; }
+.opt:hover { border-color: var(--p400); background: var(--p50); }
+.opt.sel { border-color: var(--p400); background: var(--p50); font-weight: 600; color: var(--p900); }
+@media (prefers-color-scheme: dark) { .opt.sel { color: var(--p100); } }
+.opt-em { font-size: 19px; flex-shrink: 0; }
+.txt-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.txt-row input { flex: 1; padding: 10px 13px; border: 1px solid var(--border2); border-radius: var(--rad); font-size: 14px; color: var(--text); background: var(--bg2); outline: none; }
+.txt-row input:focus { border-color: var(--p400); }
+.typing { display: flex; gap: 5px; padding: 12px 14px; align-self: flex-start; background: var(--p50); border-radius: 16px 16px 16px 3px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--p400); animation: bop 0.9s infinite; }
+.dot:nth-child(2) { animation-delay: 0.15s; }
+.dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bop { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+/* Upload */
+.upload-zone { border: 1.5px dashed var(--p200); border-radius: var(--radlg); padding: 40px 20px; text-align: center; background: var(--p50); cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+.upload-zone:hover { border-color: var(--p400); }
+.upload-zone.has-img { padding: 0; border-style: solid; border-color: var(--p400); }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-ico { font-size: 36px; margin-bottom: 10px; }
+.upload-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+.upload-hint { font-size: 13px; color: var(--text2); }
+#prev { width: 100%; max-height: 340px; object-fit: cover; display: none; border-radius: 14px; }
+
+/* Processing */
+.processing-wrap { text-align: center; padding: 20px 0 10px; }
+.processing-steps { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+.proc-step { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: var(--rad); border: 0.5px solid var(--border); background: var(--bg2); font-size: 14px; }
+.proc-step .icon { font-size: 20px; width: 28px; flex-shrink: 0; }
+.proc-step .label { color: var(--text2); flex: 1; }
+.proc-step.done .label { color: var(--text); }
+.proc-step .status { font-size: 13px; color: var(--text3); }
+.proc-step.done .status { color: var(--t400); font-weight: 600; }
+.proc-step.active .status { color: var(--p400); }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Result */
+.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.ba-box { border-radius: var(--rad); overflow: hidden; border: 0.5px solid var(--border2); }
+.ba-lbl { text-align: center; padding: 7px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ba-lbl.before { background: var(--bg3); color: var(--text3); }
+.ba-lbl.after { background: var(--p800); color: var(--p50); }
+.ba-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: var(--bg3); }
+.analysis-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radlg); padding: 18px; margin-bottom: 16px; font-size: 14px; line-height: 1.75; color: var(--text); }
+.analysis-box h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--p400); margin: 16px 0 6px; }
+.analysis-box h3:first-child { margin-top: 0; }
+.disclaimer-box { background: var(--a50); border-radius: var(--rad); padding: 11px 14px; font-size: 12px; color: var(--a600); display: flex; gap: 8px; margin-bottom: 18px; line-height: 1.55; }
+
+/* Buttons */
+.btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.btn { padding: 10px 20px; border-radius: var(--rad); font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 7px; transition: all 0.15s; }
+.btn-p { background: var(--p900); color: var(--p50); }
+.btn-p:hover { background: var(--p800); }
+.btn-p:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-s { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-s:hover { background: var(--bg2); }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="card">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">✦</div>
+    <div class="topbar-text">
+      <div class="topbar-title">Harmonização Facial</div>
+    </div>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+
+  <div class="screen">
+
+    <!-- STEP 1: QUIZ -->
+    <div class="step" id="s1">
+      <div class="tag">Etapa 1 de 3 — Seus objetivos</div>
+      <h2>Vamos entender o que você quer</h2>
+      <div class="chat" id="chat"></div>
+      <div id="optsArea"></div>
+      <div class="txt-row" id="txtArea" style="display:none;">
+        <input type="text" id="txtInp" placeholder="Digite aqui...">
+        <button class="btn btn-p" onclick="sendTxt()">Enviar</button>
+      </div>
+      <div class="err" id="quizErr"></div>
+      <div class="btns" id="quizBtns" style="margin-top:4px;">
+        <button class="btn btn-p" id="btnNxt" onclick="advanceQuiz()" style="display:none;">Próxima →</button>
+        <button class="btn btn-p" id="btnPhoto" onclick="goStep(2)" style="display:none;">Enviar foto agora →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: UPLOAD -->
+    <div class="step" id="s2">
+      <div class="tag">Etapa 2 de 3 — Sua foto</div>
+      <h2>Agora envie sua foto</h2>
+      <div class="desc">Use uma foto frontal, com boa iluminação, expressão neutra e cabelo afastado da testa.</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInp" accept="image/jpeg,image/png,image/webp" onchange="onFile(this)">
+        <div id="upPH">
+          <div class="upload-ico">📸</div>
+          <div class="upload-title">Toque para escolher a foto</div>
+          <div class="upload-hint">JPG ou PNG · até 20MB</div>
+        </div>
+        <img id="prev" alt="Foto selecionada">
+      </div>
+      <div id="fileInfo" style="font-size:13px;color:var(--text2);margin-top:9px;display:none;"></div>
+      <div class="err" id="uploadErr" style="margin-top:10px;"></div>
+      <div class="btns" style="margin-top:18px;">
+        <button class="btn btn-p" id="btnProcess" onclick="startProcessing()" disabled>Gerar harmonização →</button>
+        <button class="btn btn-s" onclick="goStep(1)">← Voltar</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: PROCESSING -->
+    <div class="step" id="s3">
+      <div class="tag">Processando</div>
+      <h2>Gerando sua simulação...</h2>
+      <div class="desc">Isso pode levar até 60 segundos. Não feche a janela.</div>
+      <div class="processing-steps">
+        <div class="proc-step" id="ps1">
+          <span class="icon">🔍</span>
+          <span class="label">Analisando proporções faciais</span>
+          <span class="status" id="ps1s">Aguardando...</span>
+        </div>
+        <div class="proc-step" id="ps2">
+          <span class="icon">📋</span>
+          <span class="label">Gerando plano de harmonização</span>
+          <span class="status" id="ps2s">Aguardando...</span>
+        </div>
+        <div class="proc-step" id="ps3">
+          <span class="icon">🎨</span>
+          <span class="label">Gerando simulação personalizada</span>
+          <span class="status" id="ps3s">Aguardando...</span>
+        </div>
+      </div>
+      <div class="err" id="procErr"></div>
+    </div>
+
+    <!-- STEP 4: RESULT -->
+    <div class="step" id="s4">
+      <div class="tag">Resultado</div>
+      <h2>Sua simulação está pronta</h2>
+
+      <div class="disclaimer-box">
+        ⚠️ <span>Simulação gerada por IA — caráter estimativo e informativo. Não substitui avaliação presencial com profissional habilitado. Não constitui prescrição médica.</span>
+      </div>
+
+      <div class="before-after">
+        <div class="ba-box">
+          <div class="ba-lbl before">Antes</div>
+          <img class="ba-img" id="imgBefore" alt="Foto original">
+        </div>
+        <div class="ba-box">
+          <div class="ba-lbl after">✦ Depois</div>
+          <img class="ba-img" id="imgAfter" alt="Simulação">
+        </div>
+      </div>
+
+      <div class="analysis-box" id="analysisBox"></div>
+
+      <div class="btns">
+        <button class="btn btn-p" onclick="restart()">✦ Nova análise</button>
+        <button class="btn btn-s" onclick="goStep(2)">← Trocar foto</button>
+      </div>
+    </div>
+
+  </div><!-- /screen -->
+</div><!-- /card -->
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════
+let imgB64 = '';
+let imgMime = 'image/jpeg';
+let imgFile = null;
+let quizA = {};
+let qIdx = 0;
+let selOpt = null;
+
+// ═══════════════════════════════════════════
+// QUIZ DATA
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+  {
+    id: 'objetivo',
+    q: 'Qual é o seu objetivo principal com a harmonização?',
+    opts: [
+      { e:'⏪', l:'Rejuvenescimento', v:'rejuvenescimento' },
+      { e:'🔲', l:'Contorno e definição', v:'contorno e definição' },
+      { e:'💧', l:'Preenchimento de volumes', v:'preenchimento de volumes' },
+      { e:'⟺', l:'Correção de assimetrias', v:'correção de assimetrias' }
+    ]
+  },
+  {
+    id: 'regiao',
+    q: 'Qual região você quer trabalhar?',
+    opts: [
+      { e:'💋', l:'Lábios', v:'lábios' },
+      { e:'◈',  l:'Malar e maçãs', v:'malar e maçãs do rosto' },
+      { e:'〔', l:'Mandíbula e contorno', v:'mandíbula e contorno facial' },
+      { e:'🔻', l:'Mento e queixo', v:'mento e queixo' }
+    ]
+  },
+  {
+    id: 'estilo',
+    q: 'Que estilo de resultado você prefere?',
+    opts: [
+      { e:'🌿', l:'Natural e discreto', v:'natural e discreto' },
+      { e:'⚖️', l:'Equilibrado', v:'equilibrado e perceptível' },
+      { e:'✨', l:'Marcante', v:'marcante e expressivo' }
+    ]
+  },
+  {
+    id: 'preservar',
+    q: 'Alguma característica que você ama e quer preservar?',
+    type: 'text',
+    ph: 'Ex: meus olhos, o formato do nariz, o sorriso...'
+  },
+  {
+    id: 'historico',
+    q: 'Já fez algum procedimento estético antes?',
+    opts: [
+      { e:'❌', l:'Nunca fiz', v:'nenhum procedimento anterior' },
+      { e:'💉', l:'Ácido hialurônico', v:'ácido hialurônico anteriormente' },
+      { e:'⚡', l:'Toxina botulínica', v:'toxina botulínica anteriormente' },
+      { e:'📋', l:'Outros', v:'outros procedimentos anteriores' }
+    ]
+  }
+];
+
+const SYS = `You are a beauty and wellness consultant specializing in facial aesthetics education.
+You help people understand facial proportions, beauty balance, and general cosmetic wellness options.
+You provide educational, informational content about beauty treatments in a warm and supportive tone.
+Always clarify that your analysis is for educational purposes and professional consultation is recommended.
+Respond always in Brazilian Portuguese.`;
+
+// ═══════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════
+const PROG = [0, 25, 55, 75, 100];
+
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.getElementById('prog').style.width = PROG[n] + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════
+function initQuiz() {
+  document.getElementById('chat').innerHTML = '';
+  quizA = {}; qIdx = 0; selOpt = null;
+  document.getElementById('btnNxt').style.display = 'none';
+  document.getElementById('btnPhoto').style.display = 'none';
+  addBubble('ai', 'Olá! Vou fazer 5 perguntas rápidas para personalizar sua análise. Depois você envia a foto e geramos a simulação. Vamos lá! 🌟');
+  setTimeout(() => showQ(0), 500);
+}
+
+function addBubble(who, txt) {
+  const d = document.createElement('div');
+  d.className = 'bubble ' + who;
+  d.textContent = txt;
+  const c = document.getElementById('chat');
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function showQ(i) {
+  const q = QUESTIONS[i];
+  if (!q) return;
+  qIdx = i; selOpt = null;
+  addBubble('ai', `(${i+1}/5) ${q.q}`);
+
+  const oa = document.getElementById('optsArea');
+  const ta = document.getElementById('txtArea');
+  document.getElementById('btnNxt').style.display = 'none';
+  document.getElementById('btnPhoto').style.display = 'none';
+
+  if (q.type === 'text') {
+    oa.innerHTML = '';
+    ta.style.display = 'flex';
+    const inp = document.getElementById('txtInp');
+    inp.placeholder = q.ph || '';
+    inp.value = '';
+    setTimeout(() => inp.focus(), 100);
+  } else {
+    ta.style.display = 'none';
+    const grid = document.createElement('div');
+    grid.className = 'opts';
+    q.opts.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.innerHTML = `<span class="opt-em">${o.e}</span><span>${o.l}</span>`;
+      b.onclick = () => {
+        grid.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        selOpt = o;
+        if (i < QUESTIONS.length - 1) {
+          document.getElementById('btnNxt').style.display = 'inline-flex';
+          document.getElementById('btnPhoto').style.display = 'none';
+        } else {
+          document.getElementById('btnNxt').style.display = 'none';
+          document.getElementById('btnPhoto').style.display = 'inline-flex';
+        }
+      };
+      grid.appendChild(b);
+    });
+    oa.innerHTML = '';
+    oa.appendChild(grid);
+  }
+}
+
+function advanceQuiz() {
+  if (!selOpt) return;
+  quizA[QUESTIONS[qIdx].id] = selOpt.v;
+  addBubble('user', selOpt.l);
+  document.getElementById('optsArea').innerHTML = '';
+  document.getElementById('btnNxt').style.display = 'none';
+  selOpt = null;
+  setTimeout(() => showQ(qIdx + 1), 350);
+}
+
+function sendTxt() {
+  const inp = document.getElementById('txtInp');
+  const v = inp.value.trim();
+  if (!v) return;
+  quizA[QUESTIONS[qIdx].id] = v;
+  addBubble('user', v);
+  inp.value = '';
+  document.getElementById('txtArea').style.display = 'none';
+  if (qIdx < QUESTIONS.length - 1) {
+    setTimeout(() => showQ(qIdx + 1), 350);
+  } else {
+    addBubble('ai', 'Ótimo! Agora envie sua foto frontal para gerar a simulação. 📸');
+    document.getElementById('btnPhoto').style.display = 'inline-flex';
+  }
+}
+
+// ═══════════════════════════════════════════
+// UPLOAD
+// ═══════════════════════════════════════════
+function onFile(input) {
+  const f = input.files[0];
+  if (!f) return;
+  document.getElementById('uploadErr').style.display = 'none';
+  if (f.size > 20 * 1024 * 1024) {
+    const e = document.getElementById('uploadErr');
+    e.textContent = 'Arquivo muito grande (máx 20MB).';
+    e.style.display = 'block';
+    return;
+  }
+  imgMime = f.type || 'image/jpeg';
+  imgFile = f;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imgB64 = ev.target.result.split(',')[1];
+    document.getElementById('prev').src = ev.target.result;
+    document.getElementById('prev').style.display = 'block';
+    document.getElementById('upPH').style.display = 'none';
+    document.getElementById('uploadZone').classList.add('has-img');
+    document.getElementById('fileInfo').textContent = `📎 ${f.name} · ${(f.size/1024).toFixed(0)}KB`;
+    document.getElementById('fileInfo').style.display = 'block';
+    document.getElementById('btnProcess').disabled = false;
+  };
+  reader.readAsDataURL(f);
+}
+
+// ═══════════════════════════════════════════
+// PROCESSAMENTO
+// ═══════════════════════════════════════════
+function setProcStep(n, status, done) {
+  const el = document.getElementById('ps' + n);
+  const st = document.getElementById('ps' + n + 's');
+  el.className = 'proc-step' + (done ? ' done' : ' active');
+  st.innerHTML = done ? '✓ Concluído' : `<span class="spin">⟳</span> ${status}`;
+}
+
+async function startProcessing() {
+  goStep(3);
+
+  const answers = Object.entries(quizA).map(([k,v]) => `• ${k}: ${v}`).join('\n');
+
+  // ── Etapa 1: análise facial ──
+  setProcStep(1, 'Analisando...', false);
+  setProcStep(2, 'Aguardando...', false);
+  setProcStep(3, 'Aguardando...', false);
+
+  let analysisText = '';
+  try {
+    analysisText = await callVision(answers);
+    setProcStep(1, '', true);
+    setProcStep(2, '', true);
+  } catch(e) {
+    showProcErr('Erro na análise: ' + e.message);
+    return;
+  }
+
+  // ── Etapa 2: gerar imagem simulada ──
+  setProcStep(3, 'Gerando imagem...', false);
+  let afterUrl = null;
+  try {
+    afterUrl = await genImage(answers, analysisText);
+    setProcStep(3, '', true);
+  } catch(e) {
+    setProcStep(3, '', true);
+    console.warn('Imagem não gerada:', e.message);
+  }
+
+  showResult(analysisText, afterUrl);
+}
+
+async function callVision(answers) {
+  const prompt = `This is a facial beauty and wellness educational consultation. The person has shared their photo and answered a beauty goals quiz. Please provide a warm, educational beauty analysis in Brazilian Portuguese.
+
+Quiz answers:
+${answers}
+
+Please analyze this facial photo and provide an educational beauty consultation with these sections:
+
+## ✨ Análise de Harmonia Facial
+Observe os pontos de equilíbrio e beleza natural do rosto, incluindo proporções gerais e características marcantes.
+
+## 🎯 Oportunidades de Realce
+Com base nos objetivos declarados, quais áreas poderiam ser realçadas para trazer mais harmonia e confiança?
+
+## 💡 Tratamentos de Beleza Recomendados
+Liste os tratamentos estéticos mais indicados para os objetivos desta pessoa (preenchimentos, bioestimuladores, tratamentos de pele, etc), com uma breve descrição de cada um.
+
+## ⏱️ O Que Esperar
+Resultados esperados, durabilidade média dos tratamentos e cuidados pós-procedimento.
+
+## 💬 Próximo Passo
+Encoraje a pessoa a agendar uma consulta presencial com um especialista para um plano personalizado.`;
+
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      max_tokens: 1800,
+      temperature: 0.6,
+      messages: [
+        { role: 'system', content: SYS },
+        {
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:${imgMime};base64,${imgB64}`, detail: 'high' } },
+            { type: 'text', text: prompt }
+          ]
+        }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  const d = await res.json();
+  return d.content;
+}
+
+async function genImage(answers, analysis) {
+  // ── Fase 1: GPT-4o Vision analisa o rosto e gera prompt hiper-específico ──
+  const visionRes = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      max_tokens: 400,
+      temperature: 0.3,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${imgMime};base64,${imgB64}`, detail: 'high' } },
+          { type: 'text', text: `You are an expert facial aesthetics retouching director working for a premium Brazilian harmonization clinic. You have studied hundreds of real before/after cases of facial harmonization with hyaluronic acid fillers, biostimulators, and botulinum toxin.
+
+Look carefully at this portrait photo. Write a precise image editing prompt that replicates how this person would look AFTER professional facial harmonization treatments.
+
+The person's goals are: ${answers}
+
+Based on real clinical results, apply these enhancements — ALWAYS subtly and naturally:
+1. MALAR PROJECTION: Add subtle cheekbone lift and volume — the most impactful change
+2. JAW DEFINITION: Slightly sharpen and define the mandible contour
+3. PERIORBITAL: Reduce under-eye hollows and dark circles, more rested look
+4. SKIN QUALITY: Improve texture uniformity, add healthy luminosity and glow
+5. LIP DEFINITION: Slight volume and border definition, natural
+6. OVERALL LIFTING: Face appears more lifted, refreshed, and harmonious
+
+CRITICAL RULES — the result must look like the SAME person:
+- Preserve 100% of identity: bone structure, eye color, hair, ethnicity, age appearance
+- Changes must look completely natural — not "done"
+- Same camera angle, background, lighting direction
+- Do NOT change clothing, accessories, or hairstyle
+- Result should look like a natural, well-rested, harmonious version of this exact person
+
+First describe precisely who this person is (age range, skin tone, hair, key features), then describe the specific retouching.
+Max 150 words. Return ONLY the prompt text, no explanations or labels.` }
+        ]
+      }]
+    })
+  });
+
+  const vd = await visionRes.json();
+  let editPrompt = vd.content?.trim() || '';
+
+  if (!editPrompt || editPrompt.length < 30) {
+    editPrompt = `Portrait photo retouching after professional facial harmonization. Same person, same angle, same background. Apply: subtle malar/cheekbone projection for more defined cheekbones, slight jaw contouring for angular definition, under-eye hollow reduction for refreshed look, improved skin luminosity and texture uniformity, subtle lip border definition. Preserve 100% of identity — same bone structure, eye color, hair, ethnicity, age. Result looks completely natural, healthy, and harmonious. Hyperrealistic photography quality.`;
+  }
+
+  editPrompt += ' Same person, same photo angle. Photorealistic, natural result. Identity completely preserved.';
+
+  // ── Fase 2: gpt-image-1 aplica a edição na foto real ──
+  const imgRes = await fetch('/api/image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageB64: imgB64,
+      imageMime: imgMime,
+      prompt: editPrompt
+    })
+  });
+
+  if (!imgRes.ok) {
+    const err = await imgRes.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${imgRes.status}`);
+  }
+  const id = await imgRes.json();
+  return id.b64_json ? `data:image/png;base64,${id.b64_json}` : null;
+}
+
+// ═══════════════════════════════════════════
+// RESULTADO
+// ═══════════════════════════════════════════
+function showResult(analysis, afterUrl) {
+  document.getElementById('imgBefore').src = `data:${imgMime};base64,${imgB64}`;
+
+  const imgAfter = document.getElementById('imgAfter');
+  const afterLbl = imgAfter.closest('.ba-box').querySelector('.ba-lbl');
+  if (afterUrl) {
+    imgAfter.src = afterUrl;
+    imgAfter.style.display = 'block';
+    afterLbl.textContent = '✦ Depois';
+  } else {
+    imgAfter.style.display = 'none';
+    afterLbl.textContent = '✦ Simulação indisponível';
+  }
+
+  const box = document.getElementById('analysisBox');
+  const html = analysis
+    .replace(/## (.+)/g, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+  box.innerHTML = html;
+
+  goStep(4);
+}
+
+function showProcErr(msg) {
+  const e = document.getElementById('procErr');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+// RESTART
+// ═══════════════════════════════════════════
+function restart() {
+  imgB64 = ''; imgFile = null;
+  document.getElementById('prev').style.display = 'none';
+  document.getElementById('upPH').style.display = 'block';
+  document.getElementById('uploadZone').classList.remove('has-img');
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('fileInp').value = '';
+  document.getElementById('btnProcess').disabled = true;
+  document.getElementById('procErr').style.display = 'none';
+  ['ps1','ps2','ps3'].forEach(id => {
+    document.getElementById(id).className = 'proc-step';
+  });
+  document.getElementById('ps1s').textContent = 'Aguardando...';
+  document.getElementById('ps2s').textContent = 'Aguardando...';
+  document.getElementById('ps3s').textContent = 'Aguardando...';
+  initQuiz();
+  goStep(1);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('txtInp').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendTxt();
+  });
+  initQuiz();
+  goStep(1);
+});
+</script>
+</body>
+</html>
