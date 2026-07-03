@@ -12,21 +12,28 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { imageB64, imageMime = 'image/jpeg', prompt } = req.body;
+    const { imageB64, imageMime = 'image/png', maskB64, prompt } = req.body;
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const imageBuffer = Buffer.from(imageB64, 'base64');
-    const imageFile = await toFile(imageBuffer, 'photo.jpg', { type: imageMime });
+    const imageFile = await toFile(imageBuffer, 'photo.png', { type: 'image/png' });
 
-    const response = await openai.images.edit({
+    const params = {
       model: 'gpt-image-1',
       image: imageFile,
       prompt,
       size: '1024x1024',
       quality: 'high'
-    });
+    };
 
+    if (maskB64) {
+      const maskBuffer = Buffer.from(maskB64, 'base64');
+      const maskFile = await toFile(maskBuffer, 'mask.png', { type: 'image/png' });
+      params.mask = maskFile;
+    }
+
+    const response = await openai.images.edit(params);
     return res.status(200).json({ b64_json: response.data[0].b64_json });
   } catch (err) {
     console.error(err);
