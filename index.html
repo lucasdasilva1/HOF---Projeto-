@@ -421,7 +421,8 @@ const PROC_EN = {
   'Pálpebra Superior':              'upper eyelid lifting and rejuvenation'
 };
 
-const INTENSITY_EN = ['', 'very subtly', 'subtly', 'moderately', 'noticeably', 'dramatically'];
+// Mapeamento conservador — mesmo "Muito Intenso" é "subtly" para não over-editar
+const INTENSITY_EN = ['', 'ever so slightly', 'very subtly', 'subtly', 'subtly but visibly', 'moderately'];
 
 // ═══════════════════════════════════════════════════
 // BUILD UI DE PROCEDIMENTOS
@@ -594,6 +595,11 @@ function prepareImageForEdit(b64, mime) {
       const squareB64 = c.toDataURL('image/png').split(',')[1];
 
       // Máscara oval — branco = preservar, transparente = editar (rosto)
+      // Máscara MENOR: só o rosto central, não orelhas/pescoço/testa alta
+      const faceCx = ox + sw * 0.50;
+      const faceCy = oy + sh * 0.38;  // centro vertical do rosto (ligeiramente acima do meio)
+      const faceRx = sw * 0.26;       // raio horizontal: apenas bochecha a bochecha
+      const faceRy = sh * 0.27;       // raio vertical: apenas testa a mento
       const mc = document.createElement('canvas');
       mc.width = SIZE; mc.height = SIZE;
       const mctx = mc.getContext('2d');
@@ -601,17 +607,11 @@ function prepareImageForEdit(b64, mime) {
       mctx.fillRect(0, 0, SIZE, SIZE);
       mctx.globalCompositeOperation = 'destination-out';
       mctx.beginPath();
-      mctx.ellipse(
-        ox + sw * 0.50,  // cx
-        oy + sh * 0.40,  // cy (um pouco acima do centro para cobrir o rosto)
-        sw * 0.44,       // rx
-        sh * 0.43,       // ry
-        0, 0, Math.PI * 2
-      );
+      mctx.ellipse(faceCx, faceCy, faceRx, faceRy, 0, 0, Math.PI * 2);
       mctx.fill();
       const maskB64 = mc.toDataURL('image/png').split(',')[1];
 
-      resolve({ squareB64, maskB64 });
+      resolve({ squareB64, maskB64, faceCx, faceCy, faceRx, faceRy });
     };
     img.src = `data:${mime};base64,${b64}`;
   });
@@ -641,13 +641,21 @@ async function startProcessing() {
   ).join('; ');
 
   // ── Etapa 1: preparar imagem ──
-  let squareB64, maskB64;
+  let squareB64, maskB64, faceCx, faceCy, faceRx, faceRy;
   try {
-    ({ squareB64, maskB64 } = await prepareImageForEdit(imgB64, imgMime));
+    ({ squareB64, maskB64, faceCx, faceCy, faceRx, faceRy } = await prepareImageForEdit(imgB64, imgMime));
     setProcStep(1, '', true);
   } catch(e) {
     showProcErr('Erro ao preparar imagem: ' + e.message); return;
   }
+
+  // Seleciona os TOP 2 procedimentos por intensidade para a geração de imagem
+  // (menos mudanças simultâneas = resultado mais realista)
+  const topEnList = Object.entries(selectedProcs)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([n, i]) => `${INTENSITY_EN[i]} ${PROC_EN[n] || n}`)
+    .join(' and ');
 
   // ── Etapa 2: análise personalizada ──
   setProcStep(2, 'Analisando...', false);
@@ -663,7 +671,7 @@ async function startProcessing() {
   setProcStep(3, 'Gerando simulação...', false);
   let afterUrl = null;
   try {
-    afterUrl = await genImage(procEnList, squareB64, maskB64);
+    afterUrl = await genImage(topEnList, squareB64, maskB64, faceCx, faceCy, faceRx, faceRy);
     setProcStep(3, '', true);
   } catch(e) {
     setProcStep(3, '', true);
@@ -728,16 +736,60 @@ Convide para uma consulta presencial com um especialista para criar o plano pers
 }
 
 // ═══════════════════════════════════════════════════
-// GERAÇÃO DA IMAGEM (GPT-4o Vision → gpt-image-1)
+// BLEND: mistura original + simulado apenas no rosto
+// Resultado: 58% original + 42% simulado dentro do oval
+// Isso garante que a pessoa continue reconhecível
 // ═══════════════════════════════════════════════════
-async function genImage(procEnList, squareB64, maskB64) {
-  // Fase 1: GPT-4o descreve melhorias específicas para este rosto
+function blendFaceResult(origSquareB64, simulatedDataUrl, cx, cy, rx, ry) {
+  return new Promise(resolve => {
+    const origImg = new Image();
+    const simImg  = new Image();
+    let loaded = 0;
+
+    function check() {
+      if (++loaded < 2) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024; canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+
+      // Camada 1: original 100%
+      ctx.drawImage(origImg, 0, 0, 1024, 1024);
+
+      // Camada 2: simulado em 42% de opacidade, recortado no oval do rosto
+      ctx.save();
+      ctx.beginPath();
+      // Oval levemente maior que a máscara para transição suave nas bordas
+      ctx.ellipse(cx, cy, rx * 1.15, ry * 1.15, 0, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.globalAlpha = 0.42;
+      ctx.drawImage(simImg, 0, 0, 1024, 1024);
+      ctx.restore();
+
+      resolve(canvas.toDataURL('image/jpeg', 0.93));
+    }
+
+    origImg.onload = check;
+    simImg.onload  = check;
+    origImg.onerror = () => resolve(simulatedDataUrl); // fallback
+    simImg.onerror  = () => resolve(simulatedDataUrl); // fallback
+    origImg.src = `data:image/png;base64,${origSquareB64}`;
+    simImg.src  = simulatedDataUrl;
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// GERAÇÃO DA IMAGEM (GPT-4o Vision → gpt-image-1 → blend)
+// ═══════════════════════════════════════════════════
+async function genImage(topEnList, squareB64, maskB64, faceCx, faceCy, faceRx, faceRy) {
+
+  // ── Fase 1: GPT-4o descreve 1 mudança ultra-específica para ESTE rosto ──
   const visionRes = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      max_tokens: 150,
-      temperature: 0.2,
+      max_tokens: 80,
+      temperature: 0.15,
       messages: [{
         role: 'user',
         content: [
@@ -747,11 +799,11 @@ async function genImage(procEnList, squareB64, maskB64) {
           },
           {
             type: 'text',
-            text: `You are a professional facial aesthetics photo retoucher. Look at this portrait carefully.
+            text: `You are a high-end portrait photo retoucher. Analyze this face carefully.
 
-The requested procedures: ${procEnList}.
+Requested improvements: ${topEnList}
 
-Write a specific, concise retouching instruction (max 70 words) describing exactly what subtle visual changes to make to THIS specific person's face based on the requested procedures. Be precise about their actual facial features — shape, proportions, specific areas. Focus only on what's visually realistic for photo retouching. No preamble, just the instruction.`
+Give me ONE single sentence (max 35 words) describing the most natural, barely-noticeable improvement specific to THIS person's facial structure. Think: "what would this person look like after excellent makeup and flattering lighting?" — not surgery. Just the instruction, no preamble.`
           }
         ]
       }]
@@ -759,11 +811,13 @@ Write a specific, concise retouching instruction (max 70 words) describing exact
   });
 
   const vd = await visionRes.json();
-  let enhDesc = vd.content?.trim() || procEnList;
-  if (enhDesc.length > 350) enhDesc = enhDesc.substring(0, 350);
+  let enhDesc = vd.content?.trim() || topEnList;
+  if (enhDesc.length > 200) enhDesc = enhDesc.substring(0, 200);
 
-  // Fase 2: gpt-image-1 aplica com máscara de rosto
-  const finalPrompt = `Professional facial aesthetics photo retouching. Apply ONLY within the face region: ${enhDesc}. KEEP ABSOLUTELY IDENTICAL everything outside the face: background, wall, clothing, hair color and style, body position, neck, lighting, camera angle. The person looks like themselves on their very best day — naturally refreshed, realistic, not surgically altered. Hyperrealistic photography, indistinguishable from a real photo.`;
+  // ── Fase 2: gpt-image-1 com prompt ultra-conservador ──
+  // A chave é: o modelo deve achar que está fazendo retoque profissional de foto,
+  // não simulação de procedimento estético
+  const finalPrompt = `High-end portrait photo color grading and skin retouching. Extremely subtle improvement: ${enhDesc}. The result must look 98% identical to the original — like the same photo taken 3 seconds later with better lighting. Preserve everything: exact face shape, skin tone, eye color, hair, background, clothing, neck, body. NO structural changes. NO surgery look. Professional beauty magazine retouching standard. Photorealistic, natural, indistinguishable from the original.`;
 
   const imgRes = await fetch('/api/image', {
     method: 'POST',
@@ -781,7 +835,12 @@ Write a specific, concise retouching instruction (max 70 words) describing exact
     throw new Error(err.error || `HTTP ${imgRes.status}`);
   }
   const id = await imgRes.json();
-  return id.b64_json ? `data:image/png;base64,${id.b64_json}` : null;
+  if (!id.b64_json) return null;
+
+  // ── Fase 3: blend client-side — mistura original + simulado no rosto ──
+  // Garante que fundo, cabelo, roupa permaneçam 100% iguais ao original
+  const simulatedDataUrl = `data:image/png;base64,${id.b64_json}`;
+  return await blendFaceResult(squareB64, simulatedDataUrl, faceCx, faceCy, faceRx, faceRy);
 }
 
 // ═══════════════════════════════════════════════════
