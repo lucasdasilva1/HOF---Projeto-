@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Harmonização Facial</title>
+<title>Harmonização Facial — Simulação por IA</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -32,15 +32,14 @@ body {
   min-height: 100vh; display: flex; justify-content: center;
   padding: 24px 16px 48px;
 }
-.app { width: 100%; max-width: 620px; }
-
+.app { width: 100%; max-width: 640px; }
 .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radlg); overflow: hidden; }
 
 /* Top bar */
 .topbar { background: var(--p900); padding: 15px 20px; display: flex; align-items: center; gap: 12px; }
 .logo { width: 36px; height: 36px; border-radius: 50%; background: var(--p400); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
-.topbar-text { flex: 1; }
 .topbar-title { color: var(--p50); font-size: 15px; font-weight: 600; }
+.topbar-sub { color: var(--p200); font-size: 12px; margin-top: 1px; }
 
 /* Progress */
 .prog-track { height: 3px; background: var(--border); }
@@ -50,50 +49,98 @@ body {
 .screen { padding: 28px 24px; }
 .step { display: none; animation: fadeIn 0.25s ease; }
 .step.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .tag { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p400); margin-bottom: 5px; }
 h2 { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
 .desc { font-size: 14px; color: var(--text2); line-height: 1.65; margin-bottom: 22px; }
-
 .err { background: var(--r50); border-radius: var(--rad); padding: 10px 13px; font-size: 13px; color: var(--r600); margin-bottom: 12px; display: none; }
-
-/* Quiz */
-.chat { background: var(--bg2); border-radius: var(--radlg); padding: 16px; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; scroll-behavior: smooth; }
-.bubble { max-width: 86%; font-size: 14px; line-height: 1.55; padding: 10px 14px; border-radius: 16px; }
-.bubble.ai { background: var(--p50); color: var(--p900); border-radius: 16px 16px 16px 3px; align-self: flex-start; border: 0.5px solid var(--p100); }
-.bubble.user { background: var(--p900); color: var(--p50); border-radius: 16px 16px 3px 16px; align-self: flex-end; }
-@media (prefers-color-scheme: dark) {
-  .bubble.ai { color: var(--p100); }
-  .bubble.user { color: #e0deff; }
-}
-.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-.opt { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--rad); padding: 11px 13px; cursor: pointer; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; transition: all 0.15s; text-align: left; }
-.opt:hover { border-color: var(--p400); background: var(--p50); }
-.opt.sel { border-color: var(--p400); background: var(--p50); font-weight: 600; color: var(--p900); }
-@media (prefers-color-scheme: dark) { .opt.sel { color: var(--p100); } }
-.opt-em { font-size: 19px; flex-shrink: 0; }
-.txt-row { display: flex; gap: 8px; margin-bottom: 14px; }
-.txt-row input { flex: 1; padding: 10px 13px; border: 1px solid var(--border2); border-radius: var(--rad); font-size: 14px; color: var(--text); background: var(--bg2); outline: none; }
-.txt-row input:focus { border-color: var(--p400); }
-.typing { display: flex; gap: 5px; padding: 12px 14px; align-self: flex-start; background: var(--p50); border-radius: 16px 16px 16px 3px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--p400); animation: bop 0.9s infinite; }
-.dot:nth-child(2) { animation-delay: 0.15s; }
-.dot:nth-child(3) { animation-delay: 0.3s; }
-@keyframes bop { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
 
 /* Upload */
 .upload-zone { border: 1.5px dashed var(--p200); border-radius: var(--radlg); padding: 40px 20px; text-align: center; background: var(--p50); cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
 .upload-zone:hover { border-color: var(--p400); }
 .upload-zone.has-img { padding: 0; border-style: solid; border-color: var(--p400); }
-.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
 .upload-ico { font-size: 36px; margin-bottom: 10px; }
 .upload-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
 .upload-hint { font-size: 13px; color: var(--text2); }
-#prev { width: 100%; max-height: 340px; object-fit: cover; display: none; border-radius: 14px; }
+#prev { width: 100%; max-height: 360px; object-fit: cover; display: none; border-radius: 14px; }
 
-/* Processing */
-.processing-wrap { text-align: center; padding: 20px 0 10px; }
+/* Buttons */
+.btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+.btn { padding: 11px 22px; border-radius: var(--rad); font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 7px; transition: all 0.15s; }
+.btn-p { background: var(--p900); color: var(--p50); }
+.btn-p:hover:not(:disabled) { background: var(--p800); }
+.btn-p:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-s { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-s:hover { background: var(--bg2); }
+
+/* ── STEP 2: PROCEDIMENTOS ── */
+.photo-thumb { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; border: 2px solid var(--p400); flex-shrink: 0; display: none; }
+.step2-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.step2-header-text { flex: 1; }
+
+.cat-block { margin-bottom: 18px; }
+.cat-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--p400); padding: 0 0 10px; border-bottom: 0.5px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.proc-item { border-bottom: 0.5px solid var(--border); }
+
+.proc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 0; cursor: pointer; gap: 12px;
+}
+.proc-name { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; }
+
+/* Toggle */
+.toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: var(--border2); border-radius: 999px;
+  transition: background 0.2s; cursor: pointer;
+}
+.toggle-track::before {
+  content: ''; position: absolute; left: 3px; top: 3px;
+  width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.toggle input:checked + .toggle-track { background: var(--p600); }
+.toggle input:checked + .toggle-track::before { transform: translateX(20px); }
+
+/* Intensity slider */
+.proc-slider { padding: 0 0 14px; display: none; }
+.proc-slider.visible { display: block; }
+
+.intensity-row { display: flex; align-items: center; gap: 12px; }
+.intensity-val { font-size: 13px; font-weight: 600; color: var(--p600); white-space: nowrap; min-width: 110px; }
+
+input[type=range].intensity-input {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 4px; border-radius: 2px; outline: none; cursor: pointer;
+  background: linear-gradient(to right, var(--p400) 0%, var(--p400) 60%, var(--border2) 60%, var(--border2) 100%);
+}
+input[type=range].intensity-input::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--p900); border: 2px solid var(--p50); box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  cursor: grab;
+}
+input[type=range].intensity-input::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--p900);
+  border: 2px solid var(--p50); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: grab;
+}
+.intensity-dots { display: flex; justify-content: space-between; margin-top: 5px; }
+.intensity-dots span { font-size: 10px; color: var(--text3); }
+
+.proc-counter {
+  font-size: 13px; color: var(--text2); padding: 12px 0 4px;
+  border-top: 0.5px solid var(--border); margin-top: 4px;
+}
+.proc-counter strong { color: var(--p600); }
+
+/* ── STEP 3: PROCESSING ── */
 .processing-steps { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
 .proc-step { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: var(--rad); border: 0.5px solid var(--border); background: var(--bg2); font-size: 14px; }
 .proc-step .icon { font-size: 20px; width: 28px; flex-shrink: 0; }
@@ -105,26 +152,75 @@ h2 { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; 
 .spin { display: inline-block; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Result */
-.before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-.ba-box { border-radius: var(--rad); overflow: hidden; border: 0.5px solid var(--border2); }
-.ba-lbl { text-align: center; padding: 7px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-.ba-lbl.before { background: var(--bg3); color: var(--text3); }
-.ba-lbl.after { background: var(--p800); color: var(--p50); }
-.ba-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: var(--bg3); }
-.analysis-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radlg); padding: 18px; margin-bottom: 16px; font-size: 14px; line-height: 1.75; color: var(--text); }
-.analysis-box h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--p400); margin: 16px 0 6px; }
-.analysis-box h3:first-child { margin-top: 0; }
-.disclaimer-box { background: var(--a50); border-radius: var(--rad); padding: 11px 14px; font-size: 12px; color: var(--a600); display: flex; gap: 8px; margin-bottom: 18px; line-height: 1.55; }
+/* ── STEP 4: RESULTADO — SLIDER BEFORE/AFTER ── */
+.slider-wrap {
+  position: relative; overflow: hidden; border-radius: var(--radlg);
+  border: 0.5px solid var(--border2); margin-bottom: 20px;
+  user-select: none; -webkit-user-select: none;
+  touch-action: none; cursor: ew-resize;
+  background: var(--bg3);
+}
+.slider-img {
+  position: absolute; inset: 0;
+}
+.slider-img img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.slider-img-after {
+  position: absolute; inset: 0;
+  clip-path: inset(0 50% 0 0);
+  transition: clip-path 0s;
+}
+.slider-img-after img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+/* Fake aspect ratio placeholder */
+.slider-placeholder { width: 100%; padding-bottom: 120%; display: block; }
 
-/* Buttons */
-.btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.btn { padding: 10px 20px; border-radius: var(--rad); font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 7px; transition: all 0.15s; }
-.btn-p { background: var(--p900); color: var(--p50); }
-.btn-p:hover { background: var(--p800); }
-.btn-p:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-s { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
-.btn-s:hover { background: var(--bg2); }
+.slider-label {
+  position: absolute; top: 10px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+}
+.slider-label.before-lbl { left: 12px; background: rgba(0,0,0,.45); color: #fff; }
+.slider-label.after-lbl { right: 12px; background: var(--p800); color: var(--p50); }
+
+.slider-divider {
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  transform: translateX(-50%); width: 3px; background: #fff;
+  box-shadow: 0 0 8px rgba(0,0,0,.4); cursor: ew-resize; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+}
+.slider-handle-btn {
+  width: 34px; height: 34px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--p900); flex-shrink: 0;
+  pointer-events: none;
+}
+
+.drag-hint {
+  text-align: center; font-size: 12px; color: var(--text3);
+  margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+
+/* Procedimentos usados */
+.procs-used { margin-bottom: 16px; }
+.procs-used-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+.procs-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.proc-badge {
+  background: var(--p50); border: 0.5px solid var(--p100);
+  color: var(--p800); font-size: 12px; font-weight: 500;
+  padding: 4px 10px; border-radius: 999px;
+}
+@media (prefers-color-scheme: dark) { .proc-badge { color: var(--p100); } }
+
+/* Analysis */
+.analysis-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radlg); padding: 18px; margin-bottom: 16px; font-size: 14px; line-height: 1.75; color: var(--text); }
+.analysis-box h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--p400); margin: 16px 0 6px; }
+.analysis-box h3:first-child { margin-top: 0; }
+
+.disclaimer-box { background: var(--a50); border-radius: var(--rad); padding: 11px 14px; font-size: 12px; color: var(--a600); display: flex; gap: 8px; margin-bottom: 18px; line-height: 1.55; }
 </style>
 </head>
 <body>
@@ -134,223 +230,293 @@ h2 { font-size: 21px; font-weight: 700; color: var(--text); margin-bottom: 8px; 
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="logo">✦</div>
-    <div class="topbar-text">
+    <div>
       <div class="topbar-title">Harmonização Facial</div>
+      <div class="topbar-sub">Simulação por Inteligência Artificial</div>
     </div>
   </div>
   <div class="prog-track"><div class="prog-fill" id="prog" style="width:0%"></div></div>
 
   <div class="screen">
 
-    <!-- STEP 1: QUIZ -->
-    <div class="step" id="s1">
-      <div class="tag" id="quizTag">Etapa 1 de 8 — Principal incômodo</div>
-      <h2>Vamos entender o que você quer</h2>
-      <div class="chat" id="chat"></div>
-      <div id="optsArea"></div>
-      <div class="txt-row" id="txtArea" style="display:none;">
-        <input type="text" id="txtInp" placeholder="Digite aqui...">
-        <button class="btn btn-p" onclick="sendTxt()">Enviar</button>
-      </div>
-      <div class="err" id="quizErr"></div>
-      <div class="btns" id="quizBtns" style="margin-top:4px;">
-        <button class="btn btn-p" id="btnNxt" onclick="advanceQuiz()" style="display:none;">Próxima →</button>
-        <button class="btn btn-p" id="btnPhoto" onclick="goStep(2)" style="display:none;">Enviar foto agora →</button>
-      </div>
-    </div>
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 1: UPLOAD                         -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step active" id="s1">
+      <div class="tag">Etapa 1 de 3 — Sua foto</div>
+      <h2>Envie sua foto</h2>
+      <div class="desc">Sem óculos · sem filtro · boa iluminação · olhando para frente · só você na foto.</div>
 
-    <!-- STEP 2: UPLOAD -->
-    <div class="step" id="s2">
-      <div class="tag">Etapa 2 de 3 — Sua foto</div>
-      <h2>Agora envie sua foto</h2>
-      <div class="desc">Para o melhor resultado: sem óculos · sem filtro · boa iluminação · olhando para frente · apenas uma pessoa na foto.</div>
       <div class="upload-zone" id="uploadZone">
-        <input type="file" id="fileInp" accept="image/jpeg,image/png,image/webp" onchange="onFile(this)">
+        <input type="file" id="fileInp" accept="image/jpeg,image/png,image/webp,image/heic" onchange="onFile(this)">
         <div id="upPH">
           <div class="upload-ico">📸</div>
           <div class="upload-title">Toque para escolher a foto</div>
-          <div class="upload-hint">JPG ou PNG · até 20MB</div>
+          <div class="upload-hint">JPG, PNG ou WEBP · até 20 MB</div>
         </div>
         <img id="prev" alt="Foto selecionada">
       </div>
+
       <div id="fileInfo" style="font-size:13px;color:var(--text2);margin-top:9px;display:none;"></div>
       <div class="err" id="uploadErr" style="margin-top:10px;"></div>
-      <div class="btns" style="margin-top:18px;">
-        <button class="btn btn-p" id="btnProcess" onclick="startProcessing()" disabled>Gerar harmonização →</button>
-        <button class="btn btn-s" onclick="goStep(1)">← Voltar</button>
+
+      <div class="btns">
+        <button class="btn btn-p" id="btnToProc" onclick="goStep(2)" disabled>Escolher procedimentos →</button>
       </div>
     </div>
 
-    <!-- STEP 3: PROCESSING -->
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 2: PROCEDIMENTOS                  -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="s2">
+      <div class="step2-header">
+        <img id="photoThumb" class="photo-thumb" alt="Sua foto">
+        <div class="step2-header-text">
+          <div class="tag">Etapa 2 de 3 — Procedimentos</div>
+          <h2 style="margin-bottom:0;">O que você quer melhorar?</h2>
+        </div>
+      </div>
+      <div class="desc" style="margin-top:4px;">Ative os procedimentos e ajuste a intensidade desejada. Você pode selecionar vários.</div>
+
+      <div id="procsContainer"></div>
+
+      <div class="proc-counter" id="procCounter"><strong>0</strong> procedimentos selecionados</div>
+      <div class="err" id="procErr"></div>
+
+      <div class="btns">
+        <button class="btn btn-p" id="btnSimular" onclick="startProcessing()" disabled>✦ Simular →</button>
+        <button class="btn btn-s" onclick="goStep(1)">← Trocar foto</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 3: PROCESSANDO                    -->
+    <!-- ══════════════════════════════════════ -->
     <div class="step" id="s3">
       <div class="tag">Processando</div>
       <h2>Gerando sua simulação...</h2>
       <div class="desc">Isso pode levar até 60 segundos. Não feche a janela.</div>
       <div class="processing-steps">
         <div class="proc-step" id="ps1">
-          <span class="icon">🔍</span>
-          <span class="label">Analisando proporções faciais</span>
+          <span class="icon">🖼</span>
+          <span class="label">Preparando imagem</span>
           <span class="status" id="ps1s">Aguardando...</span>
         </div>
         <div class="proc-step" id="ps2">
-          <span class="icon">📋</span>
-          <span class="label">Gerando plano de harmonização</span>
+          <span class="icon">🔍</span>
+          <span class="label">Analisando rosto e procedimentos</span>
           <span class="status" id="ps2s">Aguardando...</span>
         </div>
         <div class="proc-step" id="ps3">
           <span class="icon">🎨</span>
-          <span class="label">Gerando simulação personalizada</span>
+          <span class="label">Gerando simulação com IA</span>
           <span class="status" id="ps3s">Aguardando...</span>
         </div>
       </div>
-      <div class="err" id="procErr"></div>
+      <div class="err" id="procErr3"></div>
     </div>
 
-    <!-- STEP 4: RESULT -->
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 4: RESULTADO                      -->
+    <!-- ══════════════════════════════════════ -->
     <div class="step" id="s4">
       <div class="tag">Resultado</div>
       <h2>Sua simulação está pronta</h2>
 
       <div class="disclaimer-box">
-        ⚠️ <span>Simulação gerada por IA — caráter estimativo e informativo. Não substitui avaliação presencial com profissional habilitado. Não constitui prescrição médica.</span>
+        ⚠️ <span>Simulação gerada por IA — caráter estimativo e informativo. Não substitui avaliação presencial com profissional habilitado.</span>
       </div>
 
-      <div class="before-after">
-        <div class="ba-box">
-          <div class="ba-lbl before">Antes</div>
-          <img class="ba-img" id="imgBefore" alt="Foto original">
+      <!-- SLIDER BEFORE/AFTER -->
+      <div class="slider-wrap" id="sliderWrap">
+        <div class="slider-placeholder"></div>
+
+        <!-- Before (foto original — camada de baixo) -->
+        <div class="slider-img" id="sliderBefore">
+          <img id="imgBefore" alt="Antes">
+          <span class="slider-label before-lbl">Original</span>
         </div>
-        <div class="ba-box">
-          <div class="ba-lbl after">✦ Depois</div>
-          <img class="ba-img" id="imgAfter" alt="Simulação">
+
+        <!-- After (simulação — recortada pelo clip-path) -->
+        <div class="slider-img-after" id="sliderAfter">
+          <img id="imgAfter" alt="Simulação">
+          <span class="slider-label after-lbl">✦ Simulação</span>
+        </div>
+
+        <!-- Divisor arrastável -->
+        <div class="slider-divider" id="sliderDivider">
+          <div class="slider-handle-btn">⟺</div>
         </div>
       </div>
+      <div class="drag-hint">← Arraste para comparar →</div>
 
+      <!-- Procedimentos usados -->
+      <div class="procs-used">
+        <div class="procs-used-title">Procedimentos simulados</div>
+        <div class="procs-badges" id="procsBadges"></div>
+      </div>
+
+      <!-- Análise personalizada -->
       <div class="analysis-box" id="analysisBox"></div>
 
       <div class="btns">
-        <button class="btn btn-p" onclick="restart()">✦ Nova análise</button>
-        <button class="btn btn-s" onclick="goStep(2)">← Trocar foto</button>
+        <button class="btn btn-p" onclick="goStep(2)">↺ Ajustar procedimentos</button>
+        <button class="btn btn-s" onclick="restart()">Nova simulação</button>
       </div>
     </div>
 
   </div><!-- /screen -->
 </div><!-- /card -->
-</div>
+</div><!-- /app -->
 
 <script>
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // ESTADO
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 let imgB64 = '';
 let imgMime = 'image/jpeg';
-let imgFile = null;
-let quizA = {};
-let qIdx = 0;
-let selOpt = null;
+let selectedProcs = {}; // { "Nome do proc": intensidade (1-5) }
 
-// ═══════════════════════════════════════════
-// QUIZ DATA
-// ═══════════════════════════════════════════
-const QUESTIONS = [
+// ═══════════════════════════════════════════════════
+// DADOS DE PROCEDIMENTOS
+// ═══════════════════════════════════════════════════
+const CATEGORIES = [
   {
-    id: 'incomodo',
-    q: 'O que mais te incomoda no seu rosto atualmente?',
-    multi: true,
-    opts: [
-      { e:'😤', l:'Papada', v:'papada' },
-      { e:'🔻', l:'Queixo pequeno', v:'queixo pequeno' },
-      { e:'〔', l:'Mandíbula pouco definida', v:'mandíbula pouco definida' },
-      { e:'👁', l:'Olheiras', v:'olheiras' },
-      { e:'💋', l:'Lábios finos', v:'lábios finos' },
-      { e:'〰️', l:'Rugas e linhas', v:'rugas e linhas de expressão' },
-      { e:'😞', l:'Flacidez', v:'flacidez facial' },
-      { e:'💆', l:'Bochechas caídas', v:'bochechas caídas' }
+    name: 'Contorno & Volume',
+    procs: [
+      'Preenchimento Labial',
+      'Contorno de Mandíbula',
+      'Projeção do Mento',
+      'Malar (Maçãs do Rosto)',
+      'Rinomodelação',
+      'Olheira (Área abaixo dos olhos)'
     ]
   },
   {
-    id: 'objetivo',
-    q: 'Qual resultado você busca?',
-    multi: true,
-    opts: [
-      { e:'⏪', l:'Parecer mais jovem', v:'parecer mais jovem' },
-      { e:'🔲', l:'Rosto mais definido', v:'rosto mais definido' },
-      { e:'✨', l:'Ficar mais atraente', v:'ficar mais atraente' },
-      { e:'⟺', l:'Corrigir assimetrias', v:'corrigir assimetrias' },
-      { e:'🌿', l:'Realçar traços naturais', v:'realçar traços naturais' },
-      { e:'💪', l:'Melhorar autoestima', v:'aumentar autoestima' }
+    name: 'Rejuvenescimento & Pele',
+    procs: [
+      'Bigode Chinês',
+      'Marionete',
+      'Rugas Área de Testa',
+      'Rugas Área dos Olhos',
+      'Pálpebra Superior'
     ]
-  },
-  {
-    id: 'intensidade',
-    q: 'Qual estilo de resultado você prefere?',
-    opts: [
-      { e:'🌿', l:'Muito natural', v:'muito natural — ninguém percebe' },
-      { e:'👌', l:'Natural perceptível', v:'natural — percebem que estou melhor' },
-      { e:'⚖️', l:'Moderado', v:'moderado' },
-      { e:'✨', l:'Marcante', v:'marcante' },
-      { e:'💥', l:'Transformação máxima', v:'transformação máxima' }
-    ]
-  },
-  {
-    id: 'regioes',
-    q: 'Quais regiões você quer melhorar? (pode escolher várias)',
-    multi: true,
-    opts: [
-      { e:'〔', l:'Mandíbula', v:'mandíbula' },
-      { e:'🔻', l:'Queixo', v:'queixo' },
-      { e:'💋', l:'Lábios', v:'lábios' },
-      { e:'◈',  l:'Maçãs do rosto', v:'maçãs do rosto' },
-      { e:'👁', l:'Olheiras', v:'olheiras' },
-      { e:'🧠', l:'Testa', v:'testa' },
-      { e:'😤', l:'Papada', v:'papada' },
-      { e:'🦢', l:'Pescoço', v:'pescoço' }
-    ]
-  },
-  {
-    id: 'referencia',
-    q: 'Qual resultado combina mais com você?',
-    opts: [
-      { e:'🌿', l:'Natural', v:'estética natural' },
-      { e:'👑', l:'Elegante', v:'estética elegante e sofisticada' },
-      { e:'💪', l:'Mais masculino', v:'traços mais masculinos e angulosos' },
-      { e:'🌸', l:'Mais feminino', v:'traços mais femininos e delicados' }
-    ]
-  },
-  {
-    id: 'idade',
-    q: 'Qual sua faixa etária?',
-    opts: [
-      { e:'🧑', l:'18 a 25 anos', v:'18 a 25 anos' },
-      { e:'🧑', l:'26 a 35 anos', v:'26 a 35 anos' },
-      { e:'🧑', l:'36 a 45 anos', v:'36 a 45 anos' },
-      { e:'🧓', l:'46 a 55 anos', v:'46 a 55 anos' },
-      { e:'🧓', l:'56 anos ou mais', v:'56 anos ou mais' }
-    ]
-  },
-  {
-    id: 'genero',
-    q: 'Como você se identifica?',
-    opts: [
-      { e:'♂️', l:'Homem', v:'homem' },
-      { e:'♀️', l:'Mulher', v:'mulher' },
-      { e:'⚧', l:'Não-binário', v:'não-binário' }
-    ]
-  },
-  {
-    id: 'mudanca',
-    q: 'Se pudesse mudar apenas uma coisa hoje, o que seria?',
-    type: 'text',
-    ph: 'Ex: quero afinar o rosto, definir meu queixo, tirar a papada...'
   }
 ];
 
-const SYS = `You are a skincare and wellness educator at a premium beauty clinic in Brazil. Your role is to look at a portrait photo and write a warm, personalized beauty wellness report in Brazilian Portuguese. You specialize in skin health, facial balance, and non-invasive beauty treatments. You always write in an encouraging, educational tone. You never refuse to analyze a portrait photo — it is your core function. Always respond in Brazilian Portuguese.`;
+const INTENSITY_LABELS = ['', 'Muito Sutil', 'Sutil', 'Moderado', 'Intenso', 'Muito Intenso'];
 
-// ═══════════════════════════════════════════
+// Mapeamento PT → EN para os prompts
+const PROC_EN = {
+  'Preenchimento Labial':           'lip volume enhancement',
+  'Contorno de Mandíbula':          'jawline definition and contouring',
+  'Projeção do Mento':              'chin projection and definition',
+  'Malar (Maçãs do Rosto)':        'cheekbone lift and definition',
+  'Rinomodelação':                  'nose refinement and reshaping',
+  'Olheira (Área abaixo dos olhos)':'under-eye hollows correction and brightening',
+  'Bigode Chinês':                  'nasolabial folds reduction',
+  'Marionete':                      'marionette lines reduction',
+  'Rugas Área de Testa':            'forehead wrinkles smoothing',
+  'Rugas Área dos Olhos':           "crow's feet and periorbital rejuvenation",
+  'Pálpebra Superior':              'upper eyelid lifting and rejuvenation'
+};
+
+const INTENSITY_EN = ['', 'very subtly', 'subtly', 'moderately', 'noticeably', 'dramatically'];
+
+// ═══════════════════════════════════════════════════
+// BUILD UI DE PROCEDIMENTOS
+// ═══════════════════════════════════════════════════
+function buildProcedures() {
+  const container = document.getElementById('procsContainer');
+  container.innerHTML = '';
+
+  CATEGORIES.forEach(cat => {
+    const catEl = document.createElement('div');
+    catEl.className = 'cat-block';
+
+    const catTitle = document.createElement('div');
+    catTitle.className = 'cat-title';
+    catTitle.textContent = cat.name;
+    catEl.appendChild(catTitle);
+
+    cat.procs.forEach(procName => {
+      const slug = procName.replace(/[^a-z0-9]/gi, '_');
+      const itemEl = document.createElement('div');
+      itemEl.className = 'proc-item';
+
+      itemEl.innerHTML = `
+        <div class="proc-header" onclick="clickProcHeader('${slug}')">
+          <span class="proc-name">${procName}</span>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="chk_${slug}" onchange="toggleProc('${procName}', '${slug}', this)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="proc-slider" id="slider_${slug}">
+          <div class="intensity-row">
+            <input type="range" class="intensity-input" id="range_${slug}"
+              min="1" max="5" value="3"
+              oninput="setIntensity('${procName}', '${slug}', this.value)"
+              onclick="event.stopPropagation()">
+            <span class="intensity-val" id="iv_${slug}">Moderado (3/5)</span>
+          </div>
+          <div class="intensity-dots">
+            <span>Muito Sutil</span><span>Sutil</span><span>Moderado</span><span>Intenso</span><span>Muito Intenso</span>
+          </div>
+        </div>
+      `;
+
+      catEl.appendChild(itemEl);
+    });
+
+    container.appendChild(catEl);
+  });
+}
+
+function clickProcHeader(slug) {
+  const chk = document.getElementById('chk_' + slug);
+  chk.checked = !chk.checked;
+  chk.dispatchEvent(new Event('change'));
+}
+
+function toggleProc(name, slug, checkbox) {
+  const sliderDiv = document.getElementById('slider_' + slug);
+  if (checkbox.checked) {
+    selectedProcs[name] = 3;
+    sliderDiv.classList.add('visible');
+    updateRangeTrack(slug, 3);
+  } else {
+    delete selectedProcs[name];
+    sliderDiv.classList.remove('visible');
+  }
+  updateProcCounter();
+}
+
+function setIntensity(name, slug, val) {
+  const v = parseInt(val);
+  selectedProcs[name] = v;
+  document.getElementById('iv_' + slug).textContent = `${INTENSITY_LABELS[v]} (${v}/5)`;
+  updateRangeTrack(slug, v);
+}
+
+function updateRangeTrack(slug, val) {
+  const range = document.getElementById('range_' + slug);
+  if (!range) return;
+  const pct = ((val - 1) / 4) * 100;
+  range.style.background = `linear-gradient(to right, var(--p400) 0%, var(--p400) ${pct}%, var(--border2) ${pct}%, var(--border2) 100%)`;
+}
+
+function updateProcCounter() {
+  const count = Object.keys(selectedProcs).length;
+  document.getElementById('procCounter').innerHTML =
+    `<strong>${count}</strong> procedimento${count !== 1 ? 's' : ''} selecionado${count !== 1 ? 's' : ''}`;
+  document.getElementById('btnSimular').disabled = count === 0;
+}
+
+// ═══════════════════════════════════════════════════
 // NAVEGAÇÃO
-// ═══════════════════════════════════════════
-const PROG = [0, 25, 55, 75, 100];
+// ═══════════════════════════════════════════════════
+const PROG = [0, 33, 66, 85, 100];
 
 function goStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -359,285 +525,59 @@ function goStep(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ═══════════════════════════════════════════
-// QUIZ
-// ═══════════════════════════════════════════
-function initQuiz() {
-  document.getElementById('chat').innerHTML = '';
-  quizA = {}; qIdx = 0; selOpt = null;
-  document.getElementById('btnNxt').style.display = 'none';
-  document.getElementById('btnPhoto').style.display = 'none';
-  addBubble('ai', 'Olá! Vou fazer 8 perguntas rápidas para personalizar sua simulação. Quanto mais você responder, mais preciso fica o resultado. Vamos lá! 🌟');
-  setTimeout(() => showQ(0), 500);
-}
-
-function addBubble(who, txt) {
-  const d = document.createElement('div');
-  d.className = 'bubble ' + who;
-  d.textContent = txt;
-  const c = document.getElementById('chat');
-  c.appendChild(d);
-  c.scrollTop = c.scrollHeight;
-}
-
-const QUIZ_TAGS = [
-  'Etapa 1 de 8 — Principal incômodo (múltipla escolha)',
-  'Etapa 2 de 8 — Objetivo estético (múltipla escolha)',
-  'Etapa 3 de 8 — Intensidade desejada',
-  'Etapa 4 de 8 — Regiões (múltipla escolha)',
-  'Etapa 5 de 8 — Referência estética',
-  'Etapa 6 de 8 — Faixa etária',
-  'Etapa 7 de 8 — Gênero',
-  'Etapa 8 de 8 — Mudança desejada'
-];
-
-let multiSel = [];
-
-function showQ(i) {
-  const q = QUESTIONS[i];
-  if (!q) return;
-  qIdx = i; selOpt = null; multiSel = [];
-  addBubble('ai', `(${i+1}/8) ${q.q}`);
-  document.getElementById('quizTag').textContent = QUIZ_TAGS[i] || '';
-
-  const oa = document.getElementById('optsArea');
-  const ta = document.getElementById('txtArea');
-  document.getElementById('btnNxt').style.display = 'none';
-  document.getElementById('btnPhoto').style.display = 'none';
-
-  if (q.type === 'text') {
-    oa.innerHTML = '';
-    ta.style.display = 'flex';
-    const inp = document.getElementById('txtInp');
-    inp.placeholder = q.ph || '';
-    inp.value = '';
-    setTimeout(() => inp.focus(), 100);
-  } else if (q.multi) {
-    // múltipla seleção
-    ta.style.display = 'none';
-    const grid = document.createElement('div');
-    grid.className = 'opts';
-    q.opts.forEach(o => {
-      const b = document.createElement('button');
-      b.className = 'opt';
-      b.innerHTML = `<span class="opt-em">${o.e}</span><span>${o.l}</span>`;
-      b.onclick = () => {
-        if (b.classList.contains('sel')) {
-          b.classList.remove('sel');
-          multiSel = multiSel.filter(x => x !== o.v);
-        } else {
-          b.classList.add('sel');
-          multiSel.push(o.v);
-        }
-        if (multiSel.length > 0) {
-          document.getElementById('btnNxt').style.display = 'inline-flex';
-        } else {
-          document.getElementById('btnNxt').style.display = 'none';
-        }
-      };
-      grid.appendChild(b);
-    });
-    oa.innerHTML = '';
-    oa.appendChild(grid);
-  } else {
-    ta.style.display = 'none';
-    const grid = document.createElement('div');
-    grid.className = 'opts';
-    q.opts.forEach(o => {
-      const b = document.createElement('button');
-      b.className = 'opt';
-      b.innerHTML = `<span class="opt-em">${o.e}</span><span>${o.l}</span>`;
-      b.onclick = () => {
-        grid.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
-        b.classList.add('sel');
-        selOpt = o;
-        if (i < QUESTIONS.length - 1) {
-          document.getElementById('btnNxt').style.display = 'inline-flex';
-          document.getElementById('btnPhoto').style.display = 'none';
-        } else {
-          document.getElementById('btnNxt').style.display = 'none';
-          document.getElementById('btnPhoto').style.display = 'inline-flex';
-        }
-      };
-      grid.appendChild(b);
-    });
-    oa.innerHTML = '';
-    oa.appendChild(grid);
-  }
-}
-
-function advanceQuiz() {
-  const q = QUESTIONS[qIdx];
-  if (q.multi) {
-    if (multiSel.length === 0) return;
-    quizA[q.id] = multiSel.join(', ');
-    addBubble('user', multiSel.join(' · '));
-  } else {
-    if (!selOpt) return;
-    quizA[q.id] = selOpt.v;
-    addBubble('user', selOpt.l);
-    selOpt = null;
-  }
-  document.getElementById('optsArea').innerHTML = '';
-  document.getElementById('btnNxt').style.display = 'none';
-  multiSel = [];
-
-  const next = qIdx + 1;
-  if (next < QUESTIONS.length) {
-    setTimeout(() => showQ(next), 350);
-  } else {
-    addBubble('ai', 'Perfeito! Agora envie sua foto frontal para gerar a simulação. 📸');
-    document.getElementById('btnPhoto').style.display = 'inline-flex';
-  }
-}
-
-function sendTxt() {
-  const inp = document.getElementById('txtInp');
-  const v = inp.value.trim();
-  if (!v) return;
-  quizA[QUESTIONS[qIdx].id] = v;
-  addBubble('user', v);
-  inp.value = '';
-  document.getElementById('txtArea').style.display = 'none';
-  const nextIdx = qIdx + 1;
-  if (nextIdx < QUESTIONS.length) {
-    setTimeout(() => showQ(nextIdx), 350);
-  } else {
-    addBubble('ai', 'Perfeito! Agora envie sua foto frontal para gerar a simulação. 📸');
-    document.getElementById('btnPhoto').style.display = 'inline-flex';
-  }
-}
-
-// ═══════════════════════════════════════════
-// UPLOAD
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// UPLOAD + EXIF ROTATION
+// ═══════════════════════════════════════════════════
 function onFile(input) {
   const f = input.files[0];
   if (!f) return;
-  document.getElementById('uploadErr').style.display = 'none';
+  const errEl = document.getElementById('uploadErr');
+  errEl.style.display = 'none';
+
   if (f.size > 20 * 1024 * 1024) {
-    const e = document.getElementById('uploadErr');
-    e.textContent = 'Arquivo muito grande (máx 20MB).';
-    e.style.display = 'block';
+    errEl.textContent = 'Arquivo muito grande (máx 20 MB).';
+    errEl.style.display = 'block';
     return;
   }
+
   imgMime = f.type || 'image/jpeg';
-  imgFile = f;
+
   const reader = new FileReader();
   reader.onload = ev => {
-    imgB64 = ev.target.result.split(',')[1];
-    document.getElementById('prev').src = ev.target.result;
-    document.getElementById('prev').style.display = 'block';
-    document.getElementById('upPH').style.display = 'none';
-    document.getElementById('uploadZone').classList.add('has-img');
-    document.getElementById('fileInfo').textContent = `📎 ${f.name} · ${(f.size/1024).toFixed(0)}KB`;
-    document.getElementById('fileInfo').style.display = 'block';
-    document.getElementById('btnProcess').disabled = false;
+    // Corrige rotação EXIF via Canvas
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      imgB64 = dataUrl.split(',')[1];
+      imgMime = 'image/jpeg';
+
+      // Preview
+      document.getElementById('prev').src = dataUrl;
+      document.getElementById('prev').style.display = 'block';
+      document.getElementById('upPH').style.display = 'none';
+      document.getElementById('uploadZone').classList.add('has-img');
+      document.getElementById('fileInfo').textContent = `📎 ${f.name} · ${(f.size/1024).toFixed(0)} KB`;
+      document.getElementById('fileInfo').style.display = 'block';
+      document.getElementById('btnToProc').disabled = false;
+    };
+    img.src = ev.target.result;
   };
   reader.readAsDataURL(f);
 }
 
-// ═══════════════════════════════════════════
-// PROCESSAMENTO
-// ═══════════════════════════════════════════
-function setProcStep(n, status, done) {
-  const el = document.getElementById('ps' + n);
-  const st = document.getElementById('ps' + n + 's');
-  el.className = 'proc-step' + (done ? ' done' : ' active');
-  st.innerHTML = done ? '✓ Concluído' : `<span class="spin">⟳</span> ${status}`;
-}
-
-async function startProcessing() {
-  goStep(3);
-
-  const answers = Object.entries(quizA).map(([k,v]) => `• ${k}: ${v}`).join('\n');
-
-  // ── Etapa 1: análise facial ──
-  setProcStep(1, 'Analisando...', false);
-  setProcStep(2, 'Aguardando...', false);
-  setProcStep(3, 'Aguardando...', false);
-
-  let analysisText = '';
-  try {
-    analysisText = await callVision(answers);
-    setProcStep(1, '', true);
-    setProcStep(2, '', true);
-  } catch(e) {
-    showProcErr('Erro na análise: ' + e.message);
-    return;
-  }
-
-  // ── Etapa 2: gerar imagem simulada ──
-  setProcStep(3, 'Gerando imagem...', false);
-  let afterUrl = null;
-  try {
-    afterUrl = await genImage(answers, analysisText);
-    setProcStep(3, '', true);
-  } catch(e) {
-    setProcStep(3, '', true);
-    console.warn('Imagem não gerada:', e.message);
-  }
-
-  showResult(analysisText, afterUrl);
-}
-
-async function callVision(answers) {
-  const prompt = `A client at our beauty wellness clinic has shared a portrait photo and completed a beauty goals questionnaire. Please write a warm, personalized beauty wellness report in Brazilian Portuguese based on the photo and their answers.
-
-Client's beauty goals:
-${answers}
-
-Write the report with exactly these sections:
-
-## ✨ Análise de Harmonia Facial
-Descreva de forma positiva e encorajadora os pontos de beleza e equilíbrio natural do rosto visíveis na foto. Mencione características marcantes, tom de pele, estrutura facial.
-
-## 🎯 Oportunidades de Realce
-Com base nos objetivos do cliente, quais áreas poderiam ser valorizadas para trazer mais harmonia e confiança? Seja específico e positivo.
-
-## 💡 Tratamentos de Beleza Recomendados
-Sugira 3 a 4 tratamentos estéticos adequados aos objetivos (ex: preenchimento labial, bioestimulador de colágeno, toxina botulínica, skinbooster, fio de sustentação, etc). Para cada um, explique brevemente o que faz e o benefício esperado.
-
-## ⏱️ O Que Esperar
-Durabilidade típica dos tratamentos sugeridos e cuidados básicos pós-procedimento.
-
-## 💬 Próximo Passo
-Convide o cliente a agendar uma consulta presencial para criar um plano personalizado com um especialista.`;
-
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      max_tokens: 1800,
-      temperature: 0.6,
-      messages: [
-        { role: 'system', content: SYS },
-        {
-          role: 'user',
-          content: [
-            { type: 'image_url', image_url: { url: `data:${imgMime};base64,${imgB64}`, detail: 'high' } },
-            { type: 'text', text: prompt }
-          ]
-        }
-      ]
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const d = await res.json();
-  return d.content;
-}
-
-// ── Prepara imagem 1024x1024 + máscara oval do rosto ──
+// ═══════════════════════════════════════════════════
+// PREPARAR IMAGEM (letterbox 1024×1024 + máscara oval)
+// ═══════════════════════════════════════════════════
 function prepareImageForEdit(b64, mime) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
       const SIZE = 1024;
-      // Letterbox: escala para caber em 1024x1024 preservando proporção
       const scale = Math.min(SIZE / img.width, SIZE / img.height);
       const sw = Math.round(img.width * scale);
       const sh = Math.round(img.height * scale);
@@ -653,20 +593,21 @@ function prepareImageForEdit(b64, mime) {
       ctx.drawImage(img, ox, oy, sw, sh);
       const squareB64 = c.toDataURL('image/png').split(',')[1];
 
-      // Máscara: branco (preservar) + oval transparente sobre o rosto (editar)
+      // Máscara oval — branco = preservar, transparente = editar (rosto)
       const mc = document.createElement('canvas');
       mc.width = SIZE; mc.height = SIZE;
       const mctx = mc.getContext('2d');
       mctx.fillStyle = 'white';
       mctx.fillRect(0, 0, SIZE, SIZE);
-      // Posição do rosto na imagem letterboxed (retrato frontal típico)
-      const fx = ox + sw * 0.50;   // centro horizontal
-      const fy = oy + sh * 0.40;   // 40% do conteúdo (região do rosto)
-      const rx = sw * 0.44;         // raio horizontal
-      const ry = sh * 0.43;         // raio vertical
       mctx.globalCompositeOperation = 'destination-out';
       mctx.beginPath();
-      mctx.ellipse(fx, fy, rx, ry, 0, 0, Math.PI * 2);
+      mctx.ellipse(
+        ox + sw * 0.50,  // cx
+        oy + sh * 0.40,  // cy (um pouco acima do centro para cobrir o rosto)
+        sw * 0.44,       // rx
+        sh * 0.43,       // ry
+        0, 0, Math.PI * 2
+      );
       mctx.fill();
       const maskB64 = mc.toDataURL('image/png').split(',')[1];
 
@@ -676,36 +617,154 @@ function prepareImageForEdit(b64, mime) {
   });
 }
 
-async function genImage(answers, analysis) {
-  // ── Prepara imagem quadrada + máscara ──
-  const { squareB64, maskB64 } = await prepareImageForEdit(imgB64, imgMime);
+// ═══════════════════════════════════════════════════
+// PROCESSAMENTO
+// ═══════════════════════════════════════════════════
+function setProcStep(n, status, done) {
+  const el = document.getElementById('ps' + n);
+  const st = document.getElementById('ps' + n + 's');
+  el.className = 'proc-step' + (done ? ' done' : ' active');
+  st.innerHTML = done ? '✓ Concluído' : `<span class="spin">⟳</span> ${status}`;
+}
 
-  // ── Fase 1: GPT-4o identifica 1-2 melhorias específicas e sutis ──
+async function startProcessing() {
+  goStep(3);
+  setProcStep(1, 'Preparando...', false);
+  setProcStep(2, 'Aguardando...', false);
+  setProcStep(3, 'Aguardando...', false);
+
+  // Monta descrições PT e EN a partir dos procedimentos selecionados
+  const entries = Object.entries(selectedProcs);
+  const procPtList = entries.map(([n, i]) => `${n} (${INTENSITY_LABELS[i]})`).join(', ');
+  const procEnList = entries.map(([n, i]) =>
+    `${INTENSITY_EN[i]} apply ${PROC_EN[n] || n}`
+  ).join('; ');
+
+  // ── Etapa 1: preparar imagem ──
+  let squareB64, maskB64;
+  try {
+    ({ squareB64, maskB64 } = await prepareImageForEdit(imgB64, imgMime));
+    setProcStep(1, '', true);
+  } catch(e) {
+    showProcErr('Erro ao preparar imagem: ' + e.message); return;
+  }
+
+  // ── Etapa 2: análise personalizada ──
+  setProcStep(2, 'Analisando...', false);
+  let analysisText = '';
+  try {
+    analysisText = await callVision(procPtList);
+    setProcStep(2, '', true);
+  } catch(e) {
+    showProcErr('Erro na análise: ' + e.message); return;
+  }
+
+  // ── Etapa 3: gerar simulação ──
+  setProcStep(3, 'Gerando simulação...', false);
+  let afterUrl = null;
+  try {
+    afterUrl = await genImage(procEnList, squareB64, maskB64);
+    setProcStep(3, '', true);
+  } catch(e) {
+    setProcStep(3, '', true);
+    console.warn('Imagem não gerada:', e.message);
+  }
+
+  showResult(analysisText, afterUrl, procPtList);
+}
+
+// ═══════════════════════════════════════════════════
+// ANÁLISE (GPT-4o Vision)
+// ═══════════════════════════════════════════════════
+async function callVision(procPtList) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      max_tokens: 1400,
+      temperature: 0.6,
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um especialista em harmonização facial de uma clínica de estética premium no Brasil. Escreva em Português do Brasil, com tom caloroso, encorajador e profissional. Sempre analise a foto fornecida para dar respostas personalizadas.'
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: `data:${imgMime};base64,${imgB64}`, detail: 'high' }
+            },
+            {
+              type: 'text',
+              text: `A paciente na foto selecionou os seguintes procedimentos de harmonização facial: ${procPtList}.
+
+Com base na foto e nos procedimentos escolhidos, escreva um relatório personalizado em Português do Brasil com estas seções:
+
+## ✨ Análise Facial Personalizada
+Descreva de forma positiva e específica as características do rosto visível na foto. Mencione estrutura, proporções, pontos de beleza naturais.
+
+## 🎯 Procedimentos e Benefícios Esperados
+Para cada procedimento selecionado (${procPtList}), explique brevemente o que ele vai realizar especificamente neste rosto.
+
+## 💡 Resultado Natural Esperado
+Como a combinação destes procedimentos vai harmonizar e realçar as características naturais desta pessoa, mantendo a autenticidade.
+
+## 💬 Próximo Passo
+Convide para uma consulta presencial com um especialista para criar o plano personalizado.`
+            }
+          ]
+        }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  const d = await res.json();
+  return d.content;
+}
+
+// ═══════════════════════════════════════════════════
+// GERAÇÃO DA IMAGEM (GPT-4o Vision → gpt-image-1)
+// ═══════════════════════════════════════════════════
+async function genImage(procEnList, squareB64, maskB64) {
+  // Fase 1: GPT-4o descreve melhorias específicas para este rosto
   const visionRes = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      max_tokens: 100,
+      max_tokens: 150,
       temperature: 0.2,
       messages: [{
         role: 'user',
         content: [
-          { type: 'image_url', image_url: { url: `data:${imgMime};base64,${imgB64}`, detail: 'high' } },
-          { type: 'text', text: `You are a professional beauty photo retoucher. Look at this portrait photo. The person's goals: ${answers}
+          {
+            type: 'image_url',
+            image_url: { url: `data:${imgMime};base64,${imgB64}`, detail: 'high' }
+          },
+          {
+            type: 'text',
+            text: `You are a professional facial aesthetics photo retoucher. Look at this portrait carefully.
 
-Choose ONE or TWO subtle facial improvements that would look completely natural for this specific person (not surgical). Options: slight jawline/mandible definition, subtle facial slimming, gentle cheekbone lift, under-eye brightening, skin luminosity. Max 40 words. Return only the description, no extra text.` }
+The requested procedures: ${procEnList}.
+
+Write a specific, concise retouching instruction (max 70 words) describing exactly what subtle visual changes to make to THIS specific person's face based on the requested procedures. Be precise about their actual facial features — shape, proportions, specific areas. Focus only on what's visually realistic for photo retouching. No preamble, just the instruction.`
+          }
         ]
       }]
     })
   });
 
   const vd = await visionRes.json();
-  let enhDesc = vd.content?.trim() || 'subtle jawline definition and gentle facial contouring';
-  if (enhDesc.length > 200) enhDesc = enhDesc.substring(0, 200);
+  let enhDesc = vd.content?.trim() || procEnList;
+  if (enhDesc.length > 350) enhDesc = enhDesc.substring(0, 350);
 
-  const finalPrompt = `Subtle portrait photo retouching. Apply ONLY to the face: ${enhDesc}. KEEP IDENTICAL everything else: background, wall, mirror, clothing, hair color and style, body posture, and all surroundings. Same lighting, same camera angle. The person looks like themselves on their best day — naturally refreshed, not edited. Hyperrealistic photography, photorealistic result.`;
+  // Fase 2: gpt-image-1 aplica com máscara de rosto
+  const finalPrompt = `Professional facial aesthetics photo retouching. Apply ONLY within the face region: ${enhDesc}. KEEP ABSOLUTELY IDENTICAL everything outside the face: background, wall, clothing, hair color and style, body position, neck, lighting, camera angle. The person looks like themselves on their very best day — naturally refreshed, realistic, not surgically altered. Hyperrealistic photography, indistinguishable from a real photo.`;
 
-  // ── Fase 2: gpt-image-1 aplica a edição com máscara de rosto ──
   const imgRes = await fetch('/api/image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -725,71 +784,131 @@ Choose ONE or TWO subtle facial improvements that would look completely natural 
   return id.b64_json ? `data:image/png;base64,${id.b64_json}` : null;
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // RESULTADO
-// ═══════════════════════════════════════════
-function showResult(analysis, afterUrl) {
+// ═══════════════════════════════════════════════════
+function showResult(analysis, afterUrl, procPtList) {
+  // Imagens
   document.getElementById('imgBefore').src = `data:${imgMime};base64,${imgB64}`;
 
-  const imgAfter = document.getElementById('imgAfter');
-  const afterLbl = imgAfter.closest('.ba-box').querySelector('.ba-lbl');
   if (afterUrl) {
-    imgAfter.src = afterUrl;
-    imgAfter.style.display = 'block';
-    afterLbl.textContent = '✦ Depois';
-  } else {
-    imgAfter.style.display = 'none';
-    afterLbl.textContent = '✦ Simulação indisponível';
+    document.getElementById('imgAfter').src = afterUrl;
+    // Reset slider ao centro
+    setSliderPosition(50);
   }
 
+  // Procedimentos em badges
+  const badgesEl = document.getElementById('procsBadges');
+  badgesEl.innerHTML = procPtList.split(', ')
+    .map(p => `<span class="proc-badge">${p}</span>`)
+    .join('');
+
+  // Análise
   const box = document.getElementById('analysisBox');
-  const html = analysis
+  box.innerHTML = analysis
     .replace(/## (.+)/g, '<h3>$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>');
-  box.innerHTML = html;
 
   goStep(4);
 }
 
 function showProcErr(msg) {
-  const e = document.getElementById('procErr');
+  const e = document.getElementById('procErr3');
   e.textContent = msg;
   e.style.display = 'block';
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// SLIDER BEFORE/AFTER
+// ═══════════════════════════════════════════════════
+function setSliderPosition(pct) {
+  pct = Math.max(2, Math.min(98, pct));
+  document.getElementById('sliderDivider').style.left = pct + '%';
+  document.getElementById('sliderAfter').style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+}
+
+function initSlider() {
+  const wrap = document.getElementById('sliderWrap');
+  const divider = document.getElementById('sliderDivider');
+  let dragging = false;
+
+  function posFromEvent(e) {
+    const rect = wrap.getBoundingClientRect();
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    return ((x - rect.left) / rect.width) * 100;
+  }
+
+  divider.addEventListener('mousedown', e => { dragging = true; e.preventDefault(); });
+  wrap.addEventListener('mousemove', e => { if (dragging) setSliderPosition(posFromEvent(e)); });
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  divider.addEventListener('touchstart', e => { dragging = true; e.preventDefault(); }, { passive: false });
+  wrap.addEventListener('touchmove', e => { if (dragging) { setSliderPosition(posFromEvent(e)); e.preventDefault(); } }, { passive: false });
+  document.addEventListener('touchend', () => { dragging = false; });
+
+  // Click na área para pular para aquela posição
+  wrap.addEventListener('click', e => {
+    if (e.target === divider || divider.contains(e.target)) return;
+    setSliderPosition(posFromEvent(e));
+  });
+
+  setSliderPosition(50);
+}
+
+// ═══════════════════════════════════════════════════
 // RESTART
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function restart() {
-  imgB64 = ''; imgFile = null;
+  imgB64 = ''; imgMime = 'image/jpeg';
+  selectedProcs = {};
+
   document.getElementById('prev').style.display = 'none';
   document.getElementById('upPH').style.display = 'block';
   document.getElementById('uploadZone').classList.remove('has-img');
   document.getElementById('fileInfo').style.display = 'none';
   document.getElementById('fileInp').value = '';
-  document.getElementById('btnProcess').disabled = true;
-  document.getElementById('procErr').style.display = 'none';
+  document.getElementById('btnToProc').disabled = true;
+  document.getElementById('uploadErr').style.display = 'none';
+  document.getElementById('procErr3').style.display = 'none';
+
+  // Reset passos
   ['ps1','ps2','ps3'].forEach(id => {
     document.getElementById(id).className = 'proc-step';
   });
   document.getElementById('ps1s').textContent = 'Aguardando...';
   document.getElementById('ps2s').textContent = 'Aguardando...';
   document.getElementById('ps3s').textContent = 'Aguardando...';
-  initQuiz();
+
+  // Reset procedimentos
+  document.querySelectorAll('.toggle input[type=checkbox]').forEach(chk => { chk.checked = false; });
+  document.querySelectorAll('.proc-slider').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.intensity-input').forEach(r => { r.value = 3; });
+  document.querySelectorAll('.intensity-val').forEach(v => { v.textContent = 'Moderado (3/5)'; });
+  updateProcCounter();
+
   goStep(1);
 }
 
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('txtInp').addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendTxt();
-  });
-  initQuiz();
+  buildProcedures();
+  initSlider();
   goStep(1);
+
+  // Quando chegar no step 2, mostra thumb da foto
+  const origGoStep = goStep;
+  window.goStep = function(n) {
+    origGoStep(n);
+    if (n === 2 && imgB64) {
+      const thumb = document.getElementById('photoThumb');
+      thumb.src = `data:${imgMime};base64,${imgB64}`;
+      thumb.style.display = 'block';
+    }
+  };
 });
 </script>
 </body>
